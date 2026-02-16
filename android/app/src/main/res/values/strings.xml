@@ -5,7 +5,7 @@
     <string name="guess_hint">Wpisz nazwę kraju</string>
     <string name="submit">Sprawdź</string>
     <string name="idk">Nie wiem</string>
-    <string name="empty_prompt">Wpisz odpowiedź lub kliknij 'Nie wiem'.</string>
+    <string name="empty_prompt">Wpisz odpowiedź lub kliknij \'Nie wiem\'.</string>
     <string name="correct">Poprawna odpowiedź!</string>
     <string name="wrong_format">Błędnie. Poprawna odpowiedź: %1$s</string>
     <string name="result_format">Koniec! Twój wynik: %1$d/%2$d</string>

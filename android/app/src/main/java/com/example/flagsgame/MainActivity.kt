@@ -13,6 +13,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import java.text.Normalizer
+import org.json.JSONArray
+import org.json.JSONObject
 import kotlin.random.Random
 
 data class Country(
@@ -103,67 +105,33 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun buildCountries() {
-        countries = mutableListOf(
-            Country("PL","🇵🇱", listOf("Polska")),
-            Country("DE","🇩🇪", listOf("Niemcy")),
-            Country("FR","🇫🇷", listOf("Francja")),
-            Country("ES","🇪🇸", listOf("Hiszpania")),
-            Country("IT","🇮🇹", listOf("Włochy","Wlochy")),
-            Country("GB","🇬🇧", listOf("Wielka Brytania","Zjednoczone Królestwo","UK")),
-            Country("US","🇺🇸", listOf("Stany Zjednoczone","USA","Stany Zjednoczone Ameryki")),
-            Country("BR","🇧🇷", listOf("Brazylia")),
-            Country("CA","🇨🇦", listOf("Kanada")),
-            Country("JP","🇯🇵", listOf("Japonia")),
-            Country("CN","🇨🇳", listOf("Chiny")),
-            Country("RU","🇷🇺", listOf("Rosja")),
-            Country("IN","🇮🇳", listOf("Indie")),
-            Country("AU","🇦🇺", listOf("Australia")),
-            Country("MX","🇲🇽", listOf("Meksyk")),
-            Country("ZA","🇿🇦", listOf("Republika Południowej Afryki","RPA","Poludniowa Afryka")),
-            Country("SE","🇸🇪", listOf("Szwecja")),
-            Country("NL","🇳🇱", listOf("Holandia","Niderlandy")),
-            Country("AR","🇦🇷", listOf("Argentyna")),
-            Country("CH","🇨🇭", listOf("Szwajcaria")),
-            Country("NO","🇳🇴", listOf("Norwegia")),
-            Country("FI","🇫🇮", listOf("Finlandia")),
-            Country("DK","🇩🇰", listOf("Dania")),
-            Country("BE","🇧🇪", listOf("Belgia")),
-            Country("PT","🇵🇹", listOf("Portugalia")),
-            Country("GR","🇬🇷", listOf("Grecja")),
-            Country("TR","🇹🇷", listOf("Turcja")),
-            Country("SA","🇸🇦", listOf("Arabia Saudyjska")),
-            Country("AE","🇦🇪", listOf("Zjednoczone Emiraty Arabskie","ZEA")),
-            Country("IL","🇮🇱", listOf("Izrael")),
-            Country("EG","🇪🇬", listOf("Egipt")),
-            Country("NG","🇳🇬", listOf("Nigeria")),
-            Country("KE","🇰🇪", listOf("Kenia")),
-            Country("MA","🇲🇦", listOf("Maroko")),
-            Country("DZ","🇩🇿", listOf("Algieria")),
-            Country("CL","🇨🇱", listOf("Chile")),
-            Country("PE","🇵🇪", listOf("Peru")),
-            Country("CO","🇨🇴", listOf("Kolumbia")),
-            Country("VE","🇻🇪", listOf("Wenezuela")),
-            Country("KR","🇰🇷", listOf("Korea Południowa","Korea Poludniowa")),
-            Country("ID","🇮🇩", listOf("Indonezja")),
-            Country("PH","🇵🇭", listOf("Filipiny")),
-            Country("TH","🇹🇭", listOf("Tajlandia")),
-            Country("VN","🇻🇳", listOf("Wietnam")),
-            Country("PK","🇵🇰", listOf("Pakistan")),
-            Country("BD","🇧🇩", listOf("Bangladesz")),
-            Country("IR","🇮🇷", listOf("Iran")),
-            Country("IQ","🇮🇶", listOf("Irak")),
-            Country("HU","🇭🇺", listOf("Węgry","Wegry")),
-            Country("CZ","🇨🇿", listOf("Czechy")),
-            Country("SK","🇸🇰", listOf("Słowacja","Slowacja")),
-            Country("RO","🇷🇴", listOf("Rumunia")),
-            Country("BG","🇧🇬", listOf("Bułgaria","Bulgarie")),
-            Country("RS","🇷🇸", listOf("Serbia")),
-            Country("HR","🇭🇷", listOf("Chorwacja")),
-            Country("SI","🇸🇮", listOf("Słowenia","Slowenia")),
-            Country("BA","🇧🇦", listOf("Bośnia i Hercegowina","Bośnia","Bosnia")),
-            Country("UA","🇺🇦", listOf("Ukraina")),
-            Country("BY","🇧🇾", listOf("Białoruś","Bialorus"))
-        )
+        // Load countries from assets/countries.json to make the list configurable
+        countries = try {
+            loadCountriesFromAssets()
+        } catch (e: Exception) {
+            // fallback to a minimal hardcoded list if loading fails
+            mutableListOf(
+                Country("PL", "🇵🇱", listOf("Polska")),
+                Country("DE", "🇩🇪", listOf("Niemcy")),
+                Country("FR", "🇫🇷", listOf("Francja"))
+            )
+        }
+    }
+
+    private fun loadCountriesFromAssets(): MutableList<Country> {
+        val list = mutableListOf<Country>()
+        val json = assets.open("countries.json").bufferedReader().use { it.readText() }
+        val arr = JSONArray(json)
+        for (i in 0 until arr.length()) {
+            val o = arr.getJSONObject(i)
+            val code = o.getString("code")
+            val flag = o.getString("flag")
+            val namesArr = o.getJSONArray("names")
+            val names = mutableListOf<String>()
+            for (j in 0 until namesArr.length()) names.add(namesArr.getString(j))
+            list.add(Country(code, flag, names))
+        }
+        return list
     }
 
     private fun startGame() {
