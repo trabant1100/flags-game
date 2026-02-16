@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Zgadnij kraj po fladze</title>
+  <style>
+    :root{--bg:#f6f8fa;--card:#fff;--accent:#2b6cb0;--ok:#2f855a;--bad:#c53030}
+    *{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    body{margin:0;background:linear-gradient(180deg,#eef2f7,#fff);color:#0f172a;display:flex;align-items:center;justify-content:center;height:100vh}
+    .wrap{width:720px;max-width:96%;background:var(--card);padding:28px;border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,0.08)}
+    h1{margin:0 0 10px;font-size:20px}
+    .instructions{margin:0 0 18px;color:#475569}
+    .progress{font-weight:600;margin-bottom:8px}
+    .flag{font-size:120px;text-align:center;padding:16px;background:#f8fafc;border-radius:10px;margin-bottom:16px}
+    form{display:flex;gap:8px}
+    input[type=text]{flex:1;padding:12px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:16px}
+    button{background:var(--accent);color:#fff;border:none;padding:12px 16px;border-radius:8px;font-weight:600;cursor:pointer}
+    button.secondary{background:#6b7280}
+    #feedback{margin-top:12px;height:20px;font-weight:700}
+    #result{text-align:center;padding:18px;font-size:18px}
+    .hidden{display:none}
+    .meta{margin-top:12px;color:#64748b;font-size:13px}
+    @media (max-width:420px){.flag{font-size:84px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Zgadnij kraj po fladze</h1>
+    <p class="instructions">Pokażemy 10 flag kolejno. Wpisz nazwę kraju (po polsku). Za każdą poprawną odpowiedź otrzymujesz 1 punkt.</p>
+
+    <div id="game">
+      <div id="progress" class="progress">Pytanie 1/10</div>
+      <div id="flag" class="flag" aria-hidden="true">🇵🇱</div>
+
+      <form id="guessForm">
+        <input id="guessInput" type="text" placeholder="Wpisz nazwę kraju" autocomplete="off" />
+        <button id="submitBtn" type="submit">Sprawdź</button>
+      </form>
+
+      <div id="feedback" aria-live="polite"></div>
+      <div class="meta">Wciśnij Enter lub kliknij <strong>Sprawdź</strong>.</div>
+    </div>
+
+    <div id="result" class="hidden"></div>
+    <div style="text-align:center;margin-top:12px">
+      <button id="restartBtn" class="hidden">Zagraj ponownie</button>
+    </div>
+  </div>
+
+  <script>
+    // Lista często znanych krajów z polskimi nazwami i wariantami
+    const countries = [
+      {code:'PL',flag:'🇵🇱',names:['Polska']},
+      {code:'DE',flag:'🇩🇪',names:['Niemcy']},
+      {code:'FR',flag:'🇫🇷',names:['Francja']},
+      {code:'ES',flag:'🇪🇸',names:['Hiszpania']},
+      {code:'IT',flag:'🇮🇹',names:['Włochy','Wlochy']},
+      {code:'GB',flag:'🇬🇧',names:['Wielka Brytania','Zjednoczone Królestwo','UK']},
+      {code:'US',flag:'🇺🇸',names:['Stany Zjednoczone','USA','Stany Zjednoczone Ameryki']},
+      {code:'BR',flag:'🇧🇷',names:['Brazylia']},
+      {code:'CA',flag:'🇨🇦',names:['Kanada']},
+      {code:'JP',flag:'🇯🇵',names:['Japonia']},
+      {code:'CN',flag:'🇨🇳',names:['Chiny']},
+      {code:'RU',flag:'🇷🇺',names:['Rosja']},
+      {code:'IN',flag:'🇮🇳',names:['Indie']},
+      {code:'AU',flag:'🇦🇺',names:['Australia']},
+      {code:'MX',flag:'🇲🇽',names:['Meksyk']},
+      {code:'ZA',flag:'🇿🇦',names:['Republika Południowej Afryki','RPA','Poludniowa Afryka']},
+      {code:'SE',flag:'🇸🇪',names:['Szwecja']},
+      {code:'NL',flag:'🇳🇱',names:['Holandia','Niderlandy']},
+      {code:'AR',flag:'🇦🇷',names:['Argentyna']},
+      {code:'CH',flag:'🇨🇭',names:['Szwajcaria']}
+    ];
+
+    const TOTAL = 10;
+    let pool = [];
+    let current = 0;
+    let score = 0;
+    let answered = false;
+
+    const flagEl = document.getElementById('flag');
+    const progressEl = document.getElementById('progress');
+    const feedbackEl = document.getElementById('feedback');
+    const form = document.getElementById('guessForm');
+    const input = document.getElementById('guessInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const resultEl = document.getElementById('result');
+    const restartBtn = document.getElementById('restartBtn');
+
+    function normalizeText(s){
+      return s.trim().toLowerCase().normalize('NFD').replace(/\p{M}/gu,'').replace(/[^a-z0-9\s]/g,'');
+    }
+
+    function shuffle(a){
+      for(let i=a.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];
+      }
+      return a;
+    }
+
+    function startGame(){
+      const copy = countries.slice();
+      shuffle(copy);
+      pool = copy.slice(0,TOTAL);
+      pool.forEach(c=>{ c.norms = c.names.map(n=>normalizeText(n)); c.displayName = c.names[0]; });
+      current = 0; score = 0; answered = false;
+      resultEl.classList.add('hidden'); restartBtn.classList.add('hidden');
+      document.getElementById('game').classList.remove('hidden');
+      showQuestion();
+    }
+
+    function showQuestion(){
+      const c = pool[current];
+      progressEl.textContent = `Pytanie ${current+1}/${TOTAL}`;
+      flagEl.textContent = c.flag;
+      feedbackEl.textContent = '';
+      input.value = '';
+      input.disabled = false; input.focus();
+      submitBtn.textContent = 'Sprawdź';
+      answered = false;
+    }
+
+    function showResult(){
+      document.getElementById('game').classList.add('hidden');
+      resultEl.classList.remove('hidden');
+      resultEl.innerHTML = `Koniec! Twój wynik: <strong>${score}/${TOTAL}</strong>`;
+      restartBtn.classList.remove('hidden');
+    }
+
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      if(!answered){
+        const guess = normalizeText(input.value || '');
+        const target = pool[current];
+        const ok = target.norms.includes(guess);
+        if(ok){ score++; feedbackEl.style.color = 'var(--ok)'; feedbackEl.textContent = 'Poprawna odpowiedź!'; }
+        else{ feedbackEl.style.color='var(--bad)'; feedbackEl.textContent = `Błędnie. Poprawna odpowiedź: ${target.displayName}`; }
+        input.disabled = true;
+        submitBtn.textContent = (current+1===TOTAL)?'Zobacz wynik':'Następne';
+        answered = true;
+      } else {
+        current++;
+        if(current>=TOTAL){ showResult(); }
+        else{ showQuestion(); }
+      }
+    });
+
+    restartBtn.addEventListener('click', ()=>{ startGame(); });
+
+    // Start immediately
+    startGame();
+  </script>
+</body>
+</html>
