@@ -32,7 +32,7 @@
         android:layout_marginTop="12dp"
         android:gravity="center"
         android:padding="12dp"
-        android:text="🇵🇱"
+        android:text="@string/polish_flag"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
         android:textSize="96sp" />
 
@@ -40,10 +40,12 @@
         android:id="@+id/guessInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:hint="@string/guess_hint"
-        android:inputType="text"
         android:imeOptions="actionDone"
-        android:layout_marginTop="10dp" />
+        android:importantForAutofill="no"
+        android:inputType="text"
+        android:minHeight="48dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
