@@ -4,7 +4,9 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.TextUtils
+import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -63,6 +65,21 @@ class MainActivity : AppCompatActivity() {
         submitBtn.setOnClickListener {
             if (!answered) checkAnswer()
             else nextQuestion()
+        }
+
+        // Pressing Enter / IME action should submit the answer when the field is filled
+        input.setOnEditorActionListener { _, actionId, event ->
+            val isEnter = (actionId == EditorInfo.IME_ACTION_DONE) ||
+                    (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)
+            if (isEnter) {
+                if (!answered) {
+                    // only check if input is not empty
+                    if (!TextUtils.isEmpty(input.text.toString().trim())) checkAnswer()
+                } else {
+                    nextQuestion()
+                }
+                true
+            } else false
         }
 
         idkBtn.setOnClickListener {
