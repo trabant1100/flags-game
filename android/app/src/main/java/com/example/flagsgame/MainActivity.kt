@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity() {
                 val target = pool[current]
                 target.userGuess = "Nie wiem"
                 target.correct = false
-                showFeedback(false, "Błędnie. Poprawna odpowiedź: ${target.displayName}")
+                showFeedback(false, getString(R.string.wrong_format, target.displayName))
                 input.isEnabled = false
                 answered = true
                 Handler(Looper.getMainLooper()).postDelayed({ nextQuestion() }, 900)
@@ -183,7 +183,7 @@ class MainActivity : AppCompatActivity() {
         val raw = input.text.toString().trim()
         if (TextUtils.isEmpty(raw)) {
             feedbackTv.setTextColor(resources.getColor(android.R.color.holo_red_dark))
-            feedbackTv.text = "Wpisz odpowiedź lub kliknij 'Nie wiem'."
+            feedbackTv.text = getString(R.string.empty_prompt)
             input.requestFocus()
             return
         }
@@ -194,12 +194,12 @@ class MainActivity : AppCompatActivity() {
         target.correct = ok
         if (ok) {
             score++
-            showFeedback(true, "Poprawna odpowiedź!")
+            showFeedback(true, getString(R.string.correct))
             input.isEnabled = false
             answered = true
             Handler(Looper.getMainLooper()).postDelayed({ nextQuestion() }, 900)
         } else {
-            showFeedback(false, "Błędnie. Poprawna odpowiedź: ${target.displayName}")
+            showFeedback(false, getString(R.string.wrong_format, target.displayName))
             input.isEnabled = false
             submitBtn.text = if (current + 1 == TOTAL) "Zobacz wynik" else "Następne"
             answered = true
@@ -220,7 +220,7 @@ class MainActivity : AppCompatActivity() {
     private fun showResult() {
         resultContainer.visibility = View.VISIBLE
         restartBtn.visibility = View.VISIBLE
-        resultHeader.text = "Koniec! Twój wynik: $score/$TOTAL"
+        resultHeader.text = getString(R.string.result_format, score, TOTAL)
         summaryList.removeAllViews()
 
         val good = pool.filter { it.correct }
@@ -229,7 +229,7 @@ class MainActivity : AppCompatActivity() {
         // correct answers
         if (good.isNotEmpty()) {
             val header = TextView(this)
-            header.text = "Poprawne odpowiedzi"
+            header.text = getString(R.string.correct_header)
             header.textSize = 16f
             header.setPadding(0, 12, 0, 6)
             summaryList.addView(header)
@@ -252,7 +252,7 @@ class MainActivity : AppCompatActivity() {
 
         if (bad.isNotEmpty()) {
             val header = TextView(this)
-            header.text = "Błędne odpowiedzi"
+            header.text = getString(R.string.wrong_header)
             header.textSize = 16f
             header.setPadding(0, 12, 0, 6)
             summaryList.addView(header)
@@ -268,10 +268,10 @@ class MainActivity : AppCompatActivity() {
                 val txt = LinearLayout(this)
                 txt.orientation = LinearLayout.VERTICAL
                 val correctTv = TextView(this)
-                correctTv.text = "Poprawnie: ${b.displayName}"
+                correctTv.text = getString(R.string.correct_label, b.displayName)
                 val yourTv = TextView(this)
-                val user = if (!b.userGuess.isNullOrBlank()) b.userGuess else "brak odpowiedzi"
-                yourTv.text = "Twoja odpowiedź: $user"
+                val user = if (!b.userGuess.isNullOrBlank()) b.userGuess else getString(R.string.your_label, "<brak>")
+                yourTv.text = getString(R.string.your_label, user)
                 yourTv.setTextColor(resources.getColor(android.R.color.darker_gray))
                 txt.addView(correctTv)
                 txt.addView(yourTv)
