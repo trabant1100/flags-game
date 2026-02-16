@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Zgadnij kraj po fladze</title>
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --card: #fff;
+      --accent: #2b6cb0;
+      --ok: #2f855a;
+      --bad: #c53030;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #eef2f7, #fff);
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: 720px;
+      max-width: 96%;
+      background: var(--card);
+      padding: 28px;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+
+    .instructions {
+      margin: 0 0 18px;
+      color: #475569;
+    }
+
+    .progress {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .flag {
+      font-size: 120px;
+      text-align: center;
+      padding: 16px;
+      background: #f8fafc;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+
+    form {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 16px;
+      min-width: 0;
+    }
+
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #6b7280;
+    }
+
+    #feedback {
+      margin-top: 12px;
+      height: 20px;
+      font-weight: 700;
+    }
+
+    #result {
+      text-align: center;
+      padding: 18px;
+      font-size: 18px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .meta {
+      margin-top: 12px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    /* Summary styles */
+    #result .summary-section { margin-top: 10px; }
+    #result ul { list-style: none; padding: 0; margin: 0; }
+    .summary-item { display: flex; gap: 12px; align-items: center; padding: 10px; border-radius: 10px; background: #fbfdff; margin-bottom: 10px; }
+    .summary-flag { font-size: 40px; width: 64px; text-align: center; flex: 0 0 64px; }
+    .summary-text { flex: 1; font-size: 16px; color: #0f172a; word-break: break-word; }
+    .summary-small { color: #64748b; font-size: 13px; }
+
+    /* Responsywność */
+    @media (max-width: 720px) {
+      .wrap {
+        padding: 20px;
+        width: 92%;
+        border-radius: 10px;
+      }
+
+      h1 {
+        font-size: 18px;
+      }
+
+      .flag {
+        font-size: 100px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 12px;
+      }
+
+      .wrap {
+        padding: 16px;
+        border-radius: 10px;
+      }
+
+      h1 {
+        font-size: 17px;
+      }
+
+      .instructions {
+        font-size: 14px;
+      }
+
+      .flag {
+        font-size: 84px;
+        padding: 12px;
+      }
+
+      form {
+        flex-direction: column;
+      }
+
+      input[type="text"] {
+        font-size: 15px;
+        padding: 10px 12px;
+      }
+
+      button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 6px;
+      }
+
+      #result {
+        font-size: 16px;
+      }
+
+      .meta {
+        font-size: 12px;
+      }
+
+      #result .summary-section { margin-top: 8px; }
+      .summary-item { padding: 12px; gap: 12px; }
+      .summary-flag { font-size: 48px; width: 72px; flex: 0 0 72px; }
+      .summary-text { font-size: 15px; }
+      /* On very small screens stack flag above text for readability */
+      .summary-item.small-stack { flex-direction: column; align-items: flex-start; }
+      .summary-item.small-stack .summary-flag { width: auto; flex: 0 0 auto; }
+    }
+
+    @media (max-width: 360px) {
+      .summary-flag { font-size: 44px; width: 64px; flex: 0 0 64px; }
+      .summary-text { font-size: 14px; }
+    }
+
+    @media (max-width: 360px) {
+      .flag {
+        font-size: 72px;
+      }
+
+      h1 {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Zgadnij kraj po fladze</h1>
+    <p class="instructions">Pokażemy 10 flag kolejno. Wpisz nazwę kraju (po polsku). Za każdą poprawną odpowiedź otrzymujesz 1 punkt.</p>
+
+    <div id="game">
+      <div id="progress" class="progress">Pytanie 1/10</div>
+      <div id="flag" class="flag" aria-hidden="true">🇵🇱</div>
+
+      <form id="guessForm">
+        <input id="guessInput" type="text" placeholder="Wpisz nazwę kraju" autocomplete="off" autofocus />
+        <button id="submitBtn" type="submit">Sprawdź</button>
+        <button id="idkBtn" type="button" class="secondary">Nie wiem</button>
+      </form>
+
+      <div id="feedback" aria-live="polite"></div>
+      <div class="meta">Wciśnij Enter lub kliknij <strong>Sprawdź</strong>.</div>
+    </div>
+
+    <div id="result" class="hidden"></div>
+    <div style="text-align:center;margin-top:12px">
+      <button id="restartBtn" class="hidden">Zagraj ponownie</button>
+    </div>
+  </div>
+
+  <script>
+    // List of common countries with Polish names and variants
+    const countries = [
+      {code: 'PL', flag: '🇵🇱', names: ['Polska']},
+      {code: 'DE', flag: '🇩🇪', names: ['Niemcy']},
+      {code: 'FR', flag: '🇫🇷', names: ['Francja']},
+      {code: 'ES', flag: '🇪🇸', names: ['Hiszpania']},
+      {code: 'IT', flag: '🇮🇹', names: ['Włochy','Wlochy']},
+      {code: 'GB', flag: '🇬🇧', names: ['Wielka Brytania','Zjednoczone Królestwo','UK']},
+      {code: 'US', flag: '🇺🇸', names: ['Stany Zjednoczone','USA','Stany Zjednoczone Ameryki']},
+      {code: 'BR', flag: '🇧🇷', names: ['Brazylia']},
+      {code: 'CA', flag: '🇨🇦', names: ['Kanada']},
+      {code: 'JP', flag: '🇯🇵', names: ['Japonia']},
+      {code: 'CN', flag: '🇨🇳', names: ['Chiny']},
+      {code: 'RU', flag: '🇷🇺', names: ['Rosja']},
+      {code: 'IN', flag: '🇮🇳', names: ['Indie']},
+      {code: 'AU', flag: '🇦🇺', names: ['Australia']},
+      {code: 'MX', flag: '🇲🇽', names: ['Meksyk']},
+      {code: 'ZA', flag: '🇿🇦', names: ['Republika Południowej Afryki','RPA','Poludniowa Afryka']},
+      {code: 'SE', flag: '🇸🇪', names: ['Szwecja']},
+      {code: 'NL', flag: '🇳🇱', names: ['Holandia','Niderlandy']},
+      {code: 'AR', flag: '🇦🇷', names: ['Argentyna']},
+      {code: 'CH', flag: '🇨🇭', names: ['Szwajcaria']},
+
+      // Additional countries
+      {code: 'NO', flag: '🇳🇴', names: ['Norwegia']},
+      {code: 'FI', flag: '🇫🇮', names: ['Finlandia']},
+      {code: 'DK', flag: '🇩🇰', names: ['Dania']},
+      {code: 'BE', flag: '🇧🇪', names: ['Belgia']},
+      {code: 'PT', flag: '🇵🇹', names: ['Portugalia']},
+      {code: 'GR', flag: '🇬🇷', names: ['Grecja']},
+      {code: 'TR', flag: '🇹🇷', names: ['Turcja']},
+      {code: 'SA', flag: '🇸🇦', names: ['Arabia Saudyjska']},
+      {code: 'AE', flag: '🇦🇪', names: ['Zjednoczone Emiraty Arabskie','ZEA']},
+      {code: 'IL', flag: '🇮🇱', names: ['Izrael']},
+      {code: 'EG', flag: '🇪🇬', names: ['Egipt']},
+      {code: 'NG', flag: '🇳🇬', names: ['Nigeria']},
+      {code: 'KE', flag: '🇰🇪', names: ['Kenia']},
+      {code: 'MA', flag: '🇲🇦', names: ['Maroko']},
+      {code: 'DZ', flag: '🇩🇿', names: ['Algieria']},
+      {code: 'CL', flag: '🇨🇱', names: ['Chile']},
+      {code: 'PE', flag: '🇵🇪', names: ['Peru']},
+      {code: 'CO', flag: '🇨🇴', names: ['Kolumbia']},
+      {code: 'VE', flag: '🇻🇪', names: ['Wenezuela']},
+      {code: 'KR', flag: '🇰🇷', names: ['Korea Południowa','Korea Poludniowa']},
+      {code: 'ID', flag: '🇮🇩', names: ['Indonezja']},
+      {code: 'PH', flag: '🇵🇭', names: ['Filipiny']},
+      {code: 'TH', flag: '🇹🇭', names: ['Tajlandia']},
+      {code: 'VN', flag: '🇻🇳', names: ['Wietnam']},
+      {code: 'PK', flag: '🇵🇰', names: ['Pakistan']},
+      {code: 'BD', flag: '🇧🇩', names: ['Bangladesz']},
+      {code: 'IR', flag: '🇮🇷', names: ['Iran']},
+      {code: 'IQ', flag: '🇮🇶', names: ['Irak']},
+      {code: 'HU', flag: '🇭🇺', names: ['Węgry','Wegry']},
+      {code: 'CZ', flag: '🇨🇿', names: ['Czechy']},
+      {code: 'SK', flag: '🇸🇰', names: ['Słowacja','Slowacja']},
+      {code: 'RO', flag: '🇷🇴', names: ['Rumunia']},
+      {code: 'BG', flag: '🇧🇬', names: ['Bułgaria','Bulgarie']},
+      {code: 'RS', flag: '🇷🇸', names: ['Serbia']},
+      {code: 'HR', flag: '🇭🇷', names: ['Chorwacja']},
+      {code: 'SI', flag: '🇸🇮', names: ['Słowenia','Slowenia']},
+      {code: 'BA', flag: '🇧🇦', names: ['Bośnia i Hercegowina','Bośnia','Bosnia']},
+      {code: 'UA', flag: '🇺🇦', names: ['Ukraina']},
+      {code: 'BY', flag: '🇧🇾', names: ['Białoruś','Bialorus']}
+    ];
+
+    const TOTAL = 10;
+    let pool = [];
+    let current = 0;
+    let score = 0;
+    let answered = false;
+
+    const flagEl = document.getElementById('flag');
+    const progressEl = document.getElementById('progress');
+    const feedbackEl = document.getElementById('feedback');
+    const form = document.getElementById('guessForm');
+    const input = document.getElementById('guessInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const idkBtn = document.getElementById('idkBtn');
+    const resultEl = document.getElementById('result');
+    const restartBtn = document.getElementById('restartBtn');
+
+    function normalizeText(s){
+      return s.trim().toLowerCase().normalize('NFD').replace(/\p{M}/gu,'').replace(/[^a-z0-9\s]/g,'');
+    }
+
+    function shuffle(a){
+      for(let i=a.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];
+      }
+      return a;
+    }
+
+    function startGame(){
+      const copy = countries.slice();
+      shuffle(copy);
+      pool = copy.slice(0,TOTAL);
+      pool.forEach(c=>{ c.norms = c.names.map(n=>normalizeText(n)); c.displayName = c.names[0]; });
+      current = 0; score = 0; answered = false;
+      resultEl.classList.add('hidden'); restartBtn.classList.add('hidden');
+      document.getElementById('game').classList.remove('hidden');
+      showQuestion();
+    }
+
+    function showQuestion(){
+      const c = pool[current];
+      progressEl.textContent = `Pytanie ${current+1}/${TOTAL}`;
+      flagEl.textContent = c.flag;
+      feedbackEl.textContent = '';
+      input.value = '';
+      input.disabled = false; input.focus();
+      submitBtn.textContent = 'Sprawdź';
+      answered = false;
+    }
+
+    function showResult(){
+      document.getElementById('game').classList.add('hidden');
+      resultEl.classList.remove('hidden');
+
+      // build summary lists
+      const good = pool.filter(p => p.correct);
+      const bad = pool.filter(p => !p.correct);
+
+      let html = `<div>Koniec! Twój wynik: <strong>${score}/${TOTAL}</strong></div>`;
+
+      if(good.length){
+        html += '<div class="summary-section"><h3 style="margin-top:14px;margin-bottom:8px">Poprawne odpowiedzi</h3>';
+        good.forEach(g => {
+          html += `<div class="summary-item"><div class="summary-flag">${g.flag}</div><div class="summary-text">${g.displayName}</div></div>`;
+        });
+        html += '</div>';
+      }
+
+      if(bad.length){
+        html += '<div class="summary-section"><h3 style="margin-top:12px;margin-bottom:8px">Błędne odpowiedzi</h3>';
+        bad.forEach(b => {
+          const user = (b.userGuess && b.userGuess.length) ? b.userGuess : '<em>brak odpowiedzi</em>';
+          html += `<div class="summary-item"><div class="summary-flag">${b.flag}</div><div class="summary-text"><div><strong>Poprawnie:</strong> ${b.displayName}</div><div class="summary-small"><strong>Twoja odpowiedź:</strong> ${user}</div></div></div>`;
+        });
+        html += '</div>';
+      }
+
+      resultEl.innerHTML = html;
+      restartBtn.classList.remove('hidden');
+    }
+
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      if(!answered){
+        const rawGuess = (input.value || '').trim();
+        if(!rawGuess){
+          feedbackEl.style.color = 'var(--bad)';
+          feedbackEl.textContent = 'Wpisz odpowiedź lub kliknij "Nie wiem".';
+          input.focus();
+          return;
+        }
+        const guess = normalizeText(rawGuess);
+        const target = pool[current];
+        // record the user's attempt
+        target.userGuess = rawGuess;
+        const ok = target.norms.includes(guess);
+        target.correct = ok;
+
+        if(ok){
+          score++;
+          feedbackEl.style.color = 'var(--ok)';
+          feedbackEl.textContent = 'Popravna odpowiedź!';
+          input.disabled = true;
+          answered = true;
+          // automatically advance to the next question after a short delay
+          setTimeout(()=>{
+            current++;
+            if(current>=TOTAL){ showResult(); }
+            else{ showQuestion(); }
+          }, 900);
+        } else {
+          feedbackEl.style.color='var(--bad)';
+          feedbackEl.textContent = `Błędnie. Poprawna odpowiedź: ${target.displayName}`;
+          input.disabled = true;
+          submitBtn.textContent = (current+1===TOTAL)?'Zobacz wynik':'Następne';
+          answered = true;
+        }
+      } else {
+        current++;
+        if(current>=TOTAL){ showResult(); }
+        else{ showQuestion(); }
+      }
+    });
+
+    // "I don't know" button handler — record as incorrect and show correct answer
+    idkBtn.addEventListener('click', ()=>{
+      if(answered) return;
+      const target = pool[current];
+      target.userGuess = 'Nie wiem';
+      target.correct = false;
+      feedbackEl.style.color = 'var(--bad)';
+      feedbackEl.textContent = `Błędnie. Poprawna odpowiedź: ${target.displayName}`;
+      input.disabled = true;
+      submitBtn.textContent = (current+1===TOTAL)?'Zobacz wynik':'Następne';
+      answered = true;
+      // automatically advance to the next question after a short delay
+      setTimeout(()=>{
+        current++;
+        if(current>=TOTAL){ showResult(); }
+        else{ showQuestion(); }
+      }, 900);
+    });
+
+    restartBtn.addEventListener('click', ()=>{ startGame(); });
+
+    // Start immediately
+    startGame();
+  </script>
+</body>
+</html>
