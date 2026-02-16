@@ -3,7 +3,9 @@ plugins {
 }
 
 android {
-    compileSdk 33
+    compileSdk 36
+
+    namespace "com.example.flagsgame"
 
     defaultConfig {
         applicationId "com.example.flagsgame"
