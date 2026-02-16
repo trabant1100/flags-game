@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import android.text.TextUtils
 import android.view.KeyEvent
+import android.view.LayoutInflater
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
@@ -12,9 +13,9 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import java.text.Normalizer
+import androidx.core.content.ContextCompat
 import org.json.JSONArray
-import org.json.JSONObject
+import java.text.Normalizer
 import kotlin.random.Random
 
 data class Country(
@@ -28,7 +29,7 @@ data class Country(
 )
 
 class MainActivity : AppCompatActivity() {
-    private val TOTAL = 10
+    private val total = 10
     private lateinit var countries: MutableList<Country>
     private lateinit var pool: MutableList<Country>
     private var current = 0
@@ -87,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         idkBtn.setOnClickListener {
             if (!answered) {
                 val target = pool[current]
-                target.userGuess = "Nie wiem"
+                target.userGuess = getString(R.string.idk)
                 target.correct = false
                 showFeedback(false, getString(R.string.wrong_format, target.displayName))
                 input.isEnabled = false
@@ -109,6 +110,7 @@ class MainActivity : AppCompatActivity() {
         countries = try {
             loadCountriesFromAssets()
         } catch (e: Exception) {
+            showErrorDialog("Failed to load countries: ${e.message}")
             // fallback to a minimal hardcoded list if loading fails
             mutableListOf(
                 Country("PL", "🇵🇱", listOf("Polska")),
@@ -116,6 +118,14 @@ class MainActivity : AppCompatActivity() {
                 Country("FR", "🇫🇷", listOf("Francja"))
             )
         }
+    }
+
+    private fun showErrorDialog(message: String) {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Error")
+            .setMessage(message)
+            .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+            .show()
     }
 
     private fun loadCountriesFromAssets(): MutableList<Country> {
@@ -136,7 +146,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startGame() {
         val copy = countries.toMutableList().shuffled(Random(System.currentTimeMillis())).toMutableList()
-        pool = copy.take(TOTAL).map {
+        pool = copy.take(total).map {
             it.norms = it.names.map { n -> normalize(n) }
             it.displayName = it.names[0]
             it.userGuess = null
@@ -154,20 +164,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun showQuestion() {
         val c = pool[current]
-        progressTv.text = "Pytanie ${current + 1}/$TOTAL"
+        progressTv.text = getString(R.string.question, current + 1, total)
         flagTv.text = c.flag
         feedbackTv.text = ""
         input.setText("")
         input.isEnabled = true
         input.requestFocus()
-        submitBtn.text = "Sprawdź"
+        submitBtn.text = getString(R.string.check)
         answered = false
     }
 
     private fun checkAnswer() {
         val raw = input.text.toString().trim()
         if (TextUtils.isEmpty(raw)) {
-            feedbackTv.setTextColor(resources.getColor(android.R.color.holo_red_dark))
+            feedbackTv.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
             feedbackTv.text = getString(R.string.empty_prompt)
             input.requestFocus()
             return
@@ -186,30 +196,33 @@ class MainActivity : AppCompatActivity() {
         } else {
             showFeedback(false, getString(R.string.wrong_format, target.displayName))
             input.isEnabled = false
-            submitBtn.text = if (current + 1 == TOTAL) "Zobacz wynik" else "Następne"
+            submitBtn.text = if (current + 1 == total) getString(R.string.see_result) else getString(
+                R.string.next
+            )
             answered = true
         }
     }
 
     private fun showFeedback(ok: Boolean, text: String) {
         val color = if (ok) android.R.color.holo_green_dark else android.R.color.holo_red_dark
-        feedbackTv.setTextColor(resources.getColor(color))
+        feedbackTv.setTextColor(ContextCompat.getColor(this, color))
         feedbackTv.text = text
     }
 
     private fun nextQuestion() {
         current++
-        if (current >= TOTAL) showResult() else showQuestion()
+        if (current >= total) showResult() else showQuestion()
     }
 
     private fun showResult() {
         resultContainer.visibility = View.VISIBLE
         restartBtn.visibility = View.VISIBLE
-        resultHeader.text = getString(R.string.result_format, score, TOTAL)
+        resultHeader.text = getString(R.string.result_format, score, total)
         summaryList.removeAllViews()
 
         val good = pool.filter { it.correct }
         val bad = pool.filter { !it.correct }
+        val inflater = LayoutInflater.from(this)
 
         // correct answers
         if (good.isNotEmpty()) {
@@ -219,18 +232,15 @@ class MainActivity : AppCompatActivity() {
             header.setPadding(0, 12, 0, 6)
             summaryList.addView(header)
             for (g in good) {
-                val item = LinearLayout(this)
-                item.orientation = LinearLayout.HORIZONTAL
-                item.setPadding(8, 8, 8, 8)
-                val flag = TextView(this)
+                val item = inflater.inflate(R.layout.summary_list_item, summaryList, false)
+                val flag = item.findViewById<TextView>(R.id.flag)
+                val correctAnswer = item.findViewById<TextView>(R.id.correct_answer)
+                val userAnswer = item.findViewById<TextView>(R.id.user_answer)
+
                 flag.text = g.flag
-                flag.textSize = 36f
-                flag.width = (64 * resources.displayMetrics.density).toInt()
-                item.addView(flag)
-                val txt = TextView(this)
-                txt.text = g.displayName
-                txt.textSize = 15f
-                item.addView(txt)
+                correctAnswer.text = g.displayName
+                userAnswer.visibility = View.GONE
+
                 summaryList.addView(item)
             }
         }
@@ -242,25 +252,17 @@ class MainActivity : AppCompatActivity() {
             header.setPadding(0, 12, 0, 6)
             summaryList.addView(header)
             for (b in bad) {
-                val item = LinearLayout(this)
-                item.orientation = LinearLayout.HORIZONTAL
-                item.setPadding(8, 8, 8, 8)
-                val flag = TextView(this)
+                val item = inflater.inflate(R.layout.summary_list_item, summaryList, false)
+                val flag = item.findViewById<TextView>(R.id.flag)
+                val correctAnswer = item.findViewById<TextView>(R.id.correct_answer)
+                val userAnswer = item.findViewById<TextView>(R.id.user_answer)
+
                 flag.text = b.flag
-                flag.textSize = 36f
-                flag.width = (64 * resources.displayMetrics.density).toInt()
-                item.addView(flag)
-                val txt = LinearLayout(this)
-                txt.orientation = LinearLayout.VERTICAL
-                val correctTv = TextView(this)
-                correctTv.text = getString(R.string.correct_label, b.displayName)
-                val yourTv = TextView(this)
-                val user = if (!b.userGuess.isNullOrBlank()) b.userGuess else getString(R.string.your_label, "<brak>")
-                yourTv.text = getString(R.string.your_label, user)
-                yourTv.setTextColor(resources.getColor(android.R.color.darker_gray))
-                txt.addView(correctTv)
-                txt.addView(yourTv)
-                item.addView(txt)
+                correctAnswer.text = getString(R.string.correct_label, b.displayName)
+                val user = if (!b.userGuess.isNullOrBlank()) b.userGuess else "<brak>"
+                userAnswer.text = getString(R.string.your_label, user)
+                userAnswer.visibility = View.VISIBLE
+
                 summaryList.addView(item)
             }
         }
