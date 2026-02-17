@@ -4,6 +4,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:icon="@mipmap/ic_launcher"
         android:allowBackup="true"
         android:label="Flags Game"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
