@@ -8,6 +8,7 @@ import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -91,7 +92,9 @@ class MainActivity : AppCompatActivity() {
                 target.userGuess = getString(R.string.idk)
                 target.correct = false
                 showFeedback(false, getString(R.string.wrong_format, target.displayName))
-                input.isEnabled = false
+                // keep input enabled and visible so keyboard remains open
+                input.requestFocus()
+                showKeyboard()
                 answered = true
                 Handler(Looper.getMainLooper()).postDelayed({ nextQuestion() }, 900)
             }
@@ -190,16 +193,29 @@ class MainActivity : AppCompatActivity() {
         if (ok) {
             score++
             showFeedback(true, getString(R.string.correct))
-            input.isEnabled = false
+            // keep the input enabled so the keyboard stays visible
+            input.requestFocus()
+            showKeyboard()
             answered = true
             Handler(Looper.getMainLooper()).postDelayed({ nextQuestion() }, 900)
         } else {
             showFeedback(false, getString(R.string.wrong_format, target.displayName))
-            input.isEnabled = false
+            // keep input enabled so user can correct their answer without re-focusing
+            input.requestFocus()
+            input.selectAll()
+            showKeyboard()
             submitBtn.text = if (current + 1 == total) getString(R.string.see_result) else getString(
                 R.string.next
             )
             answered = true
+        }
+    }
+
+    private fun showKeyboard() {
+        try {
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT)
+        } catch (_: Exception) {
         }
     }
 
