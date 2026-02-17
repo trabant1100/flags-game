@@ -58,4 +58,31 @@
   {"code":"BA","flag":"🇧🇦","names":["Bośnia i Hercegowina","Bośnia","Bosnia"]},
   {"code":"UA","flag":"🇺🇦","names":["Ukraina"]},
   {"code":"BY","flag":"🇧🇾","names":["Białoruś","Bialorus"]}
+
+  ,{"code":"NZ","flag":"🇳🇿","names":["Nowa Zelandia","NowaZelandia"]}
+  ,{"code":"IS","flag":"🇮🇸","names":["Islandia"]}
+  ,{"code":"MT","flag":"🇲🇹","names":["Malta"]}
+  ,{"code":"LU","flag":"🇱🇺","names":["Luksemburg"]}
+  ,{"code":"SG","flag":"🇸🇬","names":["Singapur"]}
+  ,{"code":"TW","flag":"🇹🇼","names":["Tajwan","Tajwan(Republika)" ]}
+  ,{"code":"HK","flag":"🇭🇰","names":["Hongkong","Hong Kong"]}
+  ,{"code":"SY","flag":"🇸🇾","names":["Syria"]}
+  ,{"code":"LB","flag":"🇱🇧","names":["Liban"]}
+  ,{"code":"JO","flag":"🇯🇴","names":["Jordania"]}
+  ,{"code":"MD","flag":"🇲🇩","names":["Mołdawia","Moldawia","Moldowa"]}
+  ,{"code":"KZ","flag":"🇰🇿","names":["Kazachstan"]}
+  ,{"code":"UZ","flag":"🇺🇿","names":["Uzbekistan","Uzbekistan"]}
+  ,{"code":"AZ","flag":"🇦🇿","names":["Azerbejdżan","Azerbejdzan"]}
+  ,{"code":"GE","flag":"🇬🇪","names":["Gruzja"]}
+  ,{"code":"AM","flag":"🇦🇲","names":["Armenia"]}
+  ,{"code":"MN","flag":"🇲🇳","names":["Mongolia"]}
+  ,{"code":"NP","flag":"🇳🇵","names":["Nepal"]}
+  ,{"code":"LK","flag":"🇱🇰","names":["Sri Lanka","SriLanka"]}
+  ,{"code":"MM","flag":"🇲🇲","names":["Mjanma","Myanmar","Birma","Birma (Myanmar)"]}
+  ,{"code":"KH","flag":"🇰🇭","names":["Kambodża","Kambodza"]}
+  ,{"code":"LA","flag":"🇱🇦","names":["Laos"]}
+  ,{"code":"PY","flag":"🇵🇾","names":["Paragwaj","Paraguay"]}
+  ,{"code":"UY","flag":"🇺🇾","names":["Urugwaj"]}
+  ,{"code":"BO","flag":"🇧🇴","names":["Boliwia"]}
+  ,{"code":"EC","flag":"🇪🇨","names":["Ekwador"]}
 ]
