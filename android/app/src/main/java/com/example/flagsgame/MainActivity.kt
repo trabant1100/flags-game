@@ -111,6 +111,10 @@ class MainActivity : AppCompatActivity() {
         input.isEnabled = true
         input.requestFocus()
         submitBtn.text = getString(R.string.check)
+        // hide previous results when showing a new question
+        resultContainer.visibility = View.GONE
+        restartBtn.visibility = View.GONE
+        summaryList.removeAllViews()
         answered = false
     }
 
