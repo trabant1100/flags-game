@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     private var answered = false
 
     private lateinit var progressTv: TextView
+    private lateinit var titleTv: TextView
     private lateinit var flagTv: TextView
     private lateinit var input: EditText
     private lateinit var submitBtn: Button
@@ -39,6 +40,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         progressTv = findViewById(R.id.progress)
+        titleTv = findViewById(R.id.title)
         flagTv = findViewById(R.id.flag)
         input = findViewById(R.id.guessInput)
         submitBtn = findViewById(R.id.submitBtn)
@@ -109,6 +111,15 @@ class MainActivity : AppCompatActivity() {
         feedbackTv.text = ""
         input.setText("")
         input.isEnabled = true
+        // ensure gameplay controls are visible when showing a question
+        flagTv.visibility = View.VISIBLE
+        input.visibility = View.VISIBLE
+        submitBtn.visibility = View.VISIBLE
+        idkBtn.visibility = View.VISIBLE
+        feedbackTv.visibility = View.VISIBLE
+        // also show title and progress during gameplay
+        titleTv.visibility = View.VISIBLE
+        progressTv.visibility = View.VISIBLE
         input.requestFocus()
         submitBtn.text = getString(R.string.check)
         // hide previous results when showing a new question
@@ -149,6 +160,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showResultUI() {
+        // hide gameplay UI when showing results
+        flagTv.visibility = View.GONE
+        input.visibility = View.GONE
+        submitBtn.visibility = View.GONE
+        idkBtn.visibility = View.GONE
+        feedbackTv.visibility = View.GONE
+
+        // hide title and progress when showing results
+        titleTv.visibility = View.GONE
+        progressTv.visibility = View.GONE
+
         resultContainer.visibility = View.VISIBLE
         restartBtn.visibility = View.VISIBLE
         resultHeader.text = getString(R.string.result_format, engine.score, engineTotal())
