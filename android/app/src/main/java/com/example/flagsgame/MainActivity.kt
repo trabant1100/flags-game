@@ -226,13 +226,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun engineTotal() = engine.run { /* total */
-        // Use pool size if initialized, otherwise default
-        try {
-            pool.size
-        } catch (_: Exception) {
-            10
-        }
+    private fun engineTotal() = try {
+        engine.getPoolReadOnly().size
+    } catch (_: Exception) {
+        10
     }
 
     private fun showFeedback(ok: Boolean, text: String) {

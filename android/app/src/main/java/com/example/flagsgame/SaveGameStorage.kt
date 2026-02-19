@@ -24,11 +24,13 @@ object SaveGameStorage {
             val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
             run.put("timestamp", timestamp)
             run.put("time", sdf.format(Date(timestamp)))
-            run.put("score", engine.score)
+            // compute score from pool to avoid relying on mutable internal counters
+            val computedScore = engine.getPoolReadOnly().count { it.correct }
+            run.put("score", computedScore)
             run.put("total", engineTotal(engine))
 
             val items = JSONArray()
-            for (c in engine.pool) {
+            for (c in engine.getPoolReadOnly()) {
                 val it = JSONObject()
                 it.put("code", c.code)
                 it.put("flag", c.flag)
@@ -52,7 +54,7 @@ object SaveGameStorage {
     }
 
     private fun engineTotal(engine: GameEngine): Int {
-        return try { engine.pool.size } catch (_: Exception) { 10 }
+        return try { engine.getPoolReadOnly().size } catch (_: Exception) { 10 }
     }
 
     fun readAll(context: Context): JSONArray {

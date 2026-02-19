@@ -60,6 +60,9 @@ class GameEngine(private val total: Int = 10) {
     fun goodList() = pool.filter { it.correct }
     fun badList() = pool.filter { !it.correct }
 
+    // Public accessors for read-only external access
+    fun getTotal(): Int = total
+    fun getPoolReadOnly(): List<Country> = if (::pool.isInitialized) pool else emptyList()
     private fun normalize(s: String): String {
         val n = Normalizer.normalize(s, Normalizer.Form.NFD)
         return n.replace(Regex("\\p{M}"), "").lowercase().replace(Regex("[^a-z0-9\\s]"), "")
