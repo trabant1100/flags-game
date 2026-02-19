@@ -176,6 +176,9 @@ class MainActivity : AppCompatActivity() {
         resultHeader.text = getString(R.string.result_format, engine.score, engineTotal())
         summaryList.removeAllViews()
 
+        // persist this completed run
+        SaveGameStorage.saveRun(this, engine)
+
         val good = engine.goodList()
         val bad = engine.badList()
         val inflater = LayoutInflater.from(this)
