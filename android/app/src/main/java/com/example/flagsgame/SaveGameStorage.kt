@@ -69,4 +69,54 @@ object SaveGameStorage {
             JSONArray()
         }
     }
+
+    /**
+     * Return set of country codes that have been answered in previous saved runs.
+     * An answered item is any item whose "result" is not "unanswered".
+     */
+    fun getAnsweredCodes(context: Context): Set<String> {
+        val codes = mutableSetOf<String>()
+        try {
+            val arr = readAll(context)
+            for (i in 0 until arr.length()) {
+                val run = arr.getJSONObject(i)
+                val items = run.optJSONArray("items") ?: continue
+                for (j in 0 until items.length()) {
+                    val it = items.getJSONObject(j)
+                    val result = it.optString("result", "unanswered")
+                    if (result != "unanswered") {
+                        val code = it.optString("code", "")
+                        if (code.isNotEmpty()) codes.add(code)
+                    }
+                }
+            }
+        } catch (_: Exception) {
+        }
+        return codes
+    }
+
+    /**
+     * Return a map of country code -> number of times it appears in saved runs.
+     * Counts all occurrences in saved runs (asked count), regardless of result.
+     */
+    fun getAskedCounts(context: Context): Map<String, Int> {
+        val counts = mutableMapOf<String, Int>()
+        try {
+            val arr = readAll(context)
+            for (i in 0 until arr.length()) {
+                val run = arr.getJSONObject(i)
+                val items = run.optJSONArray("items") ?: continue
+                for (j in 0 until items.length()) {
+                    val it = items.getJSONObject(j)
+                    val code = it.optString("code", "")
+                    if (code.isNotEmpty()) {
+                        val prev = counts[code] ?: 0
+                        counts[code] = prev + 1
+                    }
+                }
+            }
+        } catch (_: Exception) {
+        }
+        return counts
+    }
 }

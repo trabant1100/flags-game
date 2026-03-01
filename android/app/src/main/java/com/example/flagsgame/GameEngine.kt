@@ -20,11 +20,33 @@ class GameEngine(private val total: Int = 10) {
         _countries.addAll(list)
     }
 
-    fun startGame() {
-        val copy = _countries.toMutableList().shuffled(Random(System.currentTimeMillis())).toMutableList()
-        pool = copy.take(total).map {
+
+    fun startGame(avoidCodes: Set<String> = emptySet(), askedCounts: Map<String, Int> = emptyMap(), seed: Long? = null) {
+        val rng = if (seed != null) Random(seed) else Random(System.currentTimeMillis())
+        val shuffled = _countries.toMutableList().shuffled(rng)
+
+        // prefer countries not in avoidCodes, and among them prefer lower askedCounts
+        val candidates = shuffled
+            .filter { it.code !in avoidCodes }
+            .sortedWith(compareBy({ askedCounts[it.code] ?: 0 }, { it.code }))
+            .toMutableList()
+
+        val selected = mutableListOf<Country>()
+        selected.addAll(candidates.take(total))
+
+        if (selected.size < total) {
+            // fill remaining from remaining (including previously answered), preferring lower askedCounts
+            val remainingNeeded = total - selected.size
+            val fallback = shuffled
+                .filter { c -> selected.none { it.code == c.code } }
+                .sortedWith(compareBy({ askedCounts[it.code] ?: 0 }, { it.code }))
+                .take(remainingNeeded)
+            selected.addAll(fallback)
+        }
+
+        pool = selected.map {
             it.norms = it.names.map { n -> normalize(n) }
-            it.displayName = it.names[0]
+            it.displayName = if (it.names.isNotEmpty()) it.names[0] else it.displayName
             it.userGuess = null
             it.correct = false
             it

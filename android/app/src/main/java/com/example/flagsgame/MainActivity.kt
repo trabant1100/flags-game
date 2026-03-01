@@ -61,6 +61,9 @@ class MainActivity : AppCompatActivity() {
         try {
             val list = CountriesLoader.loadFromAssets(this)
             engine.setCountries(list)
+            // prepare avoid set from previous saved games
+            val avoid = SaveGameStorage.getAnsweredCodes(this)
+            val counts = SaveGameStorage.getAskedCounts(this)
             // if we have saved instance state, restore engine from it
             val savedJson = savedInstanceState?.getString(KEY_GAME_JSON)
             if (!savedJson.isNullOrEmpty()) {
@@ -82,7 +85,7 @@ class MainActivity : AppCompatActivity() {
                 val sc = savedInstanceState?.getInt(KEY_GAME_SCORE, 0) ?: 0
                 engine.restoreState(restored, cur, sc)
             } else {
-                engine.startGame()
+                engine.startGame(avoid, counts)
             }
         } catch (e: Exception) {
             androidx.appcompat.app.AlertDialog.Builder(this)
@@ -127,7 +130,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         restartBtn.setOnClickListener {
-            engine.startGame()
+            val avoid = SaveGameStorage.getAnsweredCodes(this)
+            val counts = SaveGameStorage.getAskedCounts(this)
+            engine.startGame(avoid, counts)
             showQuestionUI()
         }
     }
