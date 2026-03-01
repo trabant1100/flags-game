@@ -12,9 +12,6 @@ class GameEngine(private val total: Int = 10) {
     var score = 0
         private set
 
-    val isFinished: Boolean
-        get() = ::pool.isInitialized && current >= total
-
     fun setCountries(list: List<Country>) {
         _countries.clear()
         _countries.addAll(list)
@@ -59,8 +56,6 @@ class GameEngine(private val total: Int = 10) {
 
     fun getCurrent(): Country = pool[current]
 
-    fun questionProgressText(): String = "Pytanie ${current + 1}/$total"
-
     fun checkAnswer(raw: String): Boolean {
         val g = normalize(raw)
         val target = pool[current]
@@ -98,8 +93,6 @@ class GameEngine(private val total: Int = 10) {
     fun goodList() = pool.filter { it.correct }
     fun badList() = pool.filter { !it.correct }
 
-    // Public accessors for read-only external access
-    fun getTotal(): Int = total
     fun getPoolReadOnly(): List<Country> = if (::pool.isInitialized) pool else emptyList()
     
     /** Restore engine state from an external pool snapshot. */

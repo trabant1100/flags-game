@@ -75,7 +75,7 @@ class SaveGameStorageInstrumentedTest {
         engine.getPoolReadOnly()[0].correct = true
         engine.getPoolReadOnly()[1].userGuess = "Nie wiem"
         engine.getPoolReadOnly()[1].correct = false
-        val expectedScore2 = engine.getPoolReadOnly().count { it.correct }
+        engine.getPoolReadOnly().count { it.correct }
 
         SaveGameStorage.saveRun(ctx, engine)
         SaveGameStorage.saveRun(ctx, engine)

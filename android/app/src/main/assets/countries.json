@@ -6,7 +6,7 @@
   {"code":"IT","flag":"🇮🇹","names":["Włochy","Wlochy"],"capitals":["Rzym"]},
   {"code":"GB","flag":"🇬🇧","names":["Wielka Brytania","Zjednoczone Królestwo","UK"],"capitals":["Londyn"]},
   {"code":"US","flag":"🇺🇸","names":["Stany Zjednoczone","USA","Stany Zjednoczone Ameryki"],"capitals":["Waszyngton"]},
-  {"code":"BR","flag":"🇧🇷","names":["Brazylia"],"capitals":["Brasília"]},
+  {"code":"BR","flag":"🇧🇷","names":["Brazylia"],"capitals":["Brasília","Brasilia"]},
   {"code":"CA","flag":"🇨🇦","names":["Kanada"],"capitals":["Ottawa"]},
   {"code":"JP","flag":"🇯🇵","names":["Japonia"],"capitals":["Tokio"]},
   {"code":"CN","flag":"🇨🇳","names":["Chiny"],"capitals":["Pekin"]},

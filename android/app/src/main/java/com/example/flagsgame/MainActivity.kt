@@ -1,7 +1,6 @@
 package com.example.flagsgame
 
-import android.animation.ObjectAnimator
-import android.content.Context
+// animations removed per user request
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -9,7 +8,6 @@ import android.text.TextUtils
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
-// animations removed per user request
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -97,13 +95,13 @@ class MainActivity : AppCompatActivity() {
                     for (j in 0 until namesArr.length()) names.add(namesArr.getString(j))
                     val c = Country(o.getString("code"), o.getString("flag"), names)
                     c.displayName = o.optString("displayName", if (names.isNotEmpty()) names[0] else "")
-                    c.userGuess = if (o.isNull("userGuess")) null else o.optString("userGuess", null)
+                    c.userGuess = if (o.isNull("userGuess")) null else o.getString("userGuess")
                     c.correct = o.optBoolean("correct", false)
                     // norms may be absent; leave it for GameEngine.normalize if needed
                     restored.add(c)
                 }
-                val cur = savedInstanceState?.getInt(KEY_GAME_CURRENT, 0) ?: 0
-                val sc = savedInstanceState?.getInt(KEY_GAME_SCORE, 0) ?: 0
+                val cur = savedInstanceState.getInt(KEY_GAME_CURRENT, 0)
+                val sc = savedInstanceState.getInt(KEY_GAME_SCORE, 0)
                 engine.restoreState(restored, cur, sc)
             } else {
                 // use restored or default mode to compute avoid/counts
@@ -147,7 +145,7 @@ class MainActivity : AppCompatActivity() {
                 // show correct answer depending on mode
                 val correctAns = if (gameMode == GameMode.COUNTRY_TO_CAPITAL) {
                     val cd = engine.getCurrent().capitalDisplay
-                    if (cd.isNotBlank()) cd else engine.getCurrent().displayName
+                    cd.ifBlank { engine.getCurrent().displayName }
                 } else {
                     engine.getCurrent().displayName
                 }
@@ -274,7 +272,7 @@ class MainActivity : AppCompatActivity() {
                 answered = true
                 Handler(Looper.getMainLooper()).postDelayed({ doNext() }, 900)
             } else {
-                val correctLabel = if (target.capitalDisplay.isNotBlank()) target.capitalDisplay else target.names.firstOrNull() ?: ""
+                val correctLabel = target.capitalDisplay.ifBlank { target.names.firstOrNull() ?: "" }
                 showFeedback(false, getString(R.string.wrong_format, correctLabel))
                 input.requestFocus()
                 input.selectAll()
@@ -373,7 +371,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showKeyboard() {
         try {
-            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
             imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT)
         } catch (_: Exception) {
         }
