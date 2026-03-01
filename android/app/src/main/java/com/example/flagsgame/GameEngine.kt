@@ -63,6 +63,13 @@ class GameEngine(private val total: Int = 10) {
     // Public accessors for read-only external access
     fun getTotal(): Int = total
     fun getPoolReadOnly(): List<Country> = if (::pool.isInitialized) pool else emptyList()
+    
+    /** Restore engine state from an external pool snapshot. */
+    fun restoreState(poolList: List<Country>, currentIndex: Int, scoreVal: Int) {
+        pool = poolList.toMutableList()
+        current = currentIndex
+        score = scoreVal
+    }
     private fun normalize(s: String): String {
         val n = Normalizer.normalize(s, Normalizer.Form.NFD)
         return n.replace(Regex("\\p{M}"), "").lowercase().replace(Regex("[^a-z0-9\\s]"), "")

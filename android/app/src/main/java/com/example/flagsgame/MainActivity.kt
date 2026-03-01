@@ -35,6 +35,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var summaryList: LinearLayout
     private lateinit var restartBtn: Button
 
+    companion object {
+        private const val KEY_GAME_JSON = "game_state_json"
+        private const val KEY_GAME_CURRENT = "game_current"
+        private const val KEY_GAME_SCORE = "game_score"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -51,11 +57,33 @@ class MainActivity : AppCompatActivity() {
         summaryList = findViewById(R.id.summaryList)
         restartBtn = findViewById(R.id.restartBtn)
 
-        // Load countries from assets and start the game
+        // Load countries from assets and start or restore the game
         try {
             val list = CountriesLoader.loadFromAssets(this)
             engine.setCountries(list)
-            engine.startGame()
+            // if we have saved instance state, restore engine from it
+            val savedJson = savedInstanceState?.getString(KEY_GAME_JSON)
+            if (!savedJson.isNullOrEmpty()) {
+                val restored = mutableListOf<Country>()
+                val arr = org.json.JSONArray(savedJson)
+                for (i in 0 until arr.length()) {
+                    val o = arr.getJSONObject(i)
+                    val namesArr = o.getJSONArray("names")
+                    val names = mutableListOf<String>()
+                    for (j in 0 until namesArr.length()) names.add(namesArr.getString(j))
+                    val c = Country(o.getString("code"), o.getString("flag"), names)
+                    c.displayName = o.optString("displayName", if (names.isNotEmpty()) names[0] else "")
+                    c.userGuess = if (o.isNull("userGuess")) null else o.optString("userGuess", null)
+                    c.correct = o.optBoolean("correct", false)
+                    // norms may be absent; leave it for GameEngine.normalize if needed
+                    restored.add(c)
+                }
+                val cur = savedInstanceState?.getInt(KEY_GAME_CURRENT, 0) ?: 0
+                val sc = savedInstanceState?.getInt(KEY_GAME_SCORE, 0) ?: 0
+                engine.restoreState(restored, cur, sc)
+            } else {
+                engine.startGame()
+            }
         } catch (e: Exception) {
             androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Error")
@@ -101,6 +129,29 @@ class MainActivity : AppCompatActivity() {
         restartBtn.setOnClickListener {
             engine.startGame()
             showQuestionUI()
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        try {
+            val arr = org.json.JSONArray()
+            for (c in engine.getPoolReadOnly()) {
+                val o = org.json.JSONObject()
+                o.put("code", c.code)
+                o.put("flag", c.flag)
+                val names = org.json.JSONArray()
+                for (n in c.names) names.put(n)
+                o.put("names", names)
+                o.put("displayName", c.displayName)
+                o.put("userGuess", c.userGuess ?: org.json.JSONObject.NULL)
+                o.put("correct", c.correct)
+                arr.put(o)
+            }
+            outState.putString(KEY_GAME_JSON, arr.toString())
+            outState.putInt(KEY_GAME_CURRENT, engine.current)
+            outState.putInt(KEY_GAME_SCORE, engine.score)
+        } catch (_: Exception) {
         }
     }
 
