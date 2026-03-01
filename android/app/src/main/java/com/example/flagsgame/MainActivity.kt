@@ -34,11 +34,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var resultHeader: TextView
     private lateinit var summaryList: LinearLayout
     private lateinit var restartBtn: Button
+    private var gameMode: GameMode = GameMode.FLAG_TO_COUNTRY
+    private var waitingForMode: Boolean = false
 
     companion object {
         private const val KEY_GAME_JSON = "game_state_json"
         private const val KEY_GAME_CURRENT = "game_current"
         private const val KEY_GAME_SCORE = "game_score"
+        private const val KEY_GAME_MODE = "game_mode"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,11 +64,29 @@ class MainActivity : AppCompatActivity() {
         try {
             val list = CountriesLoader.loadFromAssets(this)
             engine.setCountries(list)
-            // prepare avoid set from previous saved games
-            val avoid = SaveGameStorage.getAnsweredCodes(this)
-            val counts = SaveGameStorage.getAskedCounts(this)
+            // don't compute avoid/counts yet — we need the selected mode first
             // if we have saved instance state, restore engine from it
             val savedJson = savedInstanceState?.getString(KEY_GAME_JSON)
+            val savedModeName = savedInstanceState?.getString(KEY_GAME_MODE)
+            if (!savedModeName.isNullOrEmpty()) {
+                try { gameMode = GameMode.valueOf(savedModeName) } catch (_: Exception) {}
+            }
+            // if mode wasn't restored, ask the user which mode to play
+            if (savedModeName.isNullOrEmpty()) {
+                val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+                builder.setTitle(getString(R.string.mode_prompt))
+                    .setItems(arrayOf(getString(R.string.mode_flag_to_country), getString(R.string.mode_country_to_capital))) { _, which ->
+                            gameMode = if (which == 0) GameMode.FLAG_TO_COUNTRY else GameMode.COUNTRY_TO_CAPITAL
+                            // compute avoid/counts for chosen mode and start
+                            val avoid2 = SaveGameStorage.getAnsweredCodes(this, gameMode)
+                            val counts2 = SaveGameStorage.getAskedCounts(this, gameMode)
+                            engine.startGame(avoid2, counts2)
+                            showQuestionUI()
+                        }
+                    .setCancelable(false)
+                    .show()
+                waitingForMode = true
+            }
             if (!savedJson.isNullOrEmpty()) {
                 val restored = mutableListOf<Country>()
                 val arr = org.json.JSONArray(savedJson)
@@ -85,7 +106,10 @@ class MainActivity : AppCompatActivity() {
                 val sc = savedInstanceState?.getInt(KEY_GAME_SCORE, 0) ?: 0
                 engine.restoreState(restored, cur, sc)
             } else {
-                engine.startGame(avoid, counts)
+                // use restored or default mode to compute avoid/counts
+                val avoid2 = SaveGameStorage.getAnsweredCodes(this, gameMode)
+                val counts2 = SaveGameStorage.getAskedCounts(this, gameMode)
+                engine.startGame(avoid2, counts2)
             }
         } catch (e: Exception) {
             androidx.appcompat.app.AlertDialog.Builder(this)
@@ -98,8 +122,7 @@ class MainActivity : AppCompatActivity() {
             engine.startGame()
         }
 
-        showQuestionUI()
-
+        // setup listeners (always) so UI buttons respond even while user selects mode
         submitBtn.setOnClickListener {
             if (!answered) doCheck()
             else doNext()
@@ -121,7 +144,14 @@ class MainActivity : AppCompatActivity() {
         idkBtn.setOnClickListener {
             if (!answered) {
                 engine.markIDK(getString(R.string.idk))
-                showFeedback(false, getString(R.string.wrong_format, engine.getCurrent().displayName))
+                // show correct answer depending on mode
+                val correctAns = if (gameMode == GameMode.COUNTRY_TO_CAPITAL) {
+                    val cd = engine.getCurrent().capitalDisplay
+                    if (cd.isNotBlank()) cd else engine.getCurrent().displayName
+                } else {
+                    engine.getCurrent().displayName
+                }
+                showFeedback(false, getString(R.string.wrong_format, correctAns))
                 input.requestFocus()
                 showKeyboard()
                 answered = true
@@ -132,9 +162,22 @@ class MainActivity : AppCompatActivity() {
         restartBtn.setOnClickListener {
             val avoid = SaveGameStorage.getAnsweredCodes(this)
             val counts = SaveGameStorage.getAskedCounts(this)
-            engine.startGame(avoid, counts)
-            showQuestionUI()
+            // ask user which mode to play on restart (same as app start)
+            waitingForMode = true
+            val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+            builder.setTitle(getString(R.string.mode_prompt))
+                .setItems(arrayOf(getString(R.string.mode_flag_to_country), getString(R.string.mode_country_to_capital))) { _, which ->
+                    gameMode = if (which == 0) GameMode.FLAG_TO_COUNTRY else GameMode.COUNTRY_TO_CAPITAL
+                    waitingForMode = false
+                    engine.startGame(avoid, counts)
+                    showQuestionUI()
+                }
+                .setCancelable(false)
+                .show()
         }
+
+        // only show question UI immediately if mode was chosen (not waiting on dialog)
+        if (!waitingForMode) showQuestionUI()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -156,6 +199,7 @@ class MainActivity : AppCompatActivity() {
             outState.putString(KEY_GAME_JSON, arr.toString())
             outState.putInt(KEY_GAME_CURRENT, engine.current)
             outState.putInt(KEY_GAME_SCORE, engine.score)
+            outState.putString(KEY_GAME_MODE, gameMode.name)
         } catch (_: Exception) {
         }
     }
@@ -164,6 +208,16 @@ class MainActivity : AppCompatActivity() {
         val c = engine.getCurrent()
         progressTv.text = getString(R.string.question, engine.current + 1, engineTotal())
         flagTv.text = c.flag
+        // adjust UI depending on mode
+        if (gameMode == GameMode.COUNTRY_TO_CAPITAL) {
+            // show country name as title and adjust hint
+            titleTv.text = c.displayName
+            input.hint = getString(R.string.guess_capital_hint)
+            submitBtn.text = getString(R.string.check)
+        } else {
+            titleTv.text = getString(R.string.app_name)
+            input.hint = getString(R.string.guess_hint)
+        }
         feedbackTv.text = ""
         input.setText("")
         input.isEnabled = true
@@ -193,20 +247,41 @@ class MainActivity : AppCompatActivity() {
             input.requestFocus()
             return
         }
-        val ok = engine.checkAnswer(raw)
-        if (ok) {
-            showFeedback(true, getString(R.string.correct))
-            input.requestFocus()
-            showKeyboard()
-            answered = true
-            Handler(Looper.getMainLooper()).postDelayed({ doNext() }, 900)
+        if (gameMode == GameMode.FLAG_TO_COUNTRY) {
+            val ok = engine.checkAnswer(raw)
+            if (ok) {
+                showFeedback(true, getString(R.string.correct))
+                input.requestFocus()
+                showKeyboard()
+                answered = true
+                Handler(Looper.getMainLooper()).postDelayed({ doNext() }, 900)
+            } else {
+                showFeedback(false, getString(R.string.wrong_format, engine.getCurrent().displayName))
+                input.requestFocus()
+                input.selectAll()
+                showKeyboard()
+                submitBtn.text = if (engine.current + 1 == engineTotal()) getString(R.string.see_result) else getString(R.string.next)
+                answered = true
+            }
         } else {
-            showFeedback(false, getString(R.string.wrong_format, engine.getCurrent().displayName))
-            input.requestFocus()
-            input.selectAll()
-            showKeyboard()
-            submitBtn.text = if (engine.current + 1 == engineTotal()) getString(R.string.see_result) else getString(R.string.next)
-            answered = true
+            // country -> capital mode: delegate to GameEngine for normalization/checking
+            val ok = engine.checkCapitalAnswer(raw)
+            val target = engine.getCurrent()
+            if (ok) {
+                showFeedback(true, getString(R.string.correct))
+                input.requestFocus()
+                showKeyboard()
+                answered = true
+                Handler(Looper.getMainLooper()).postDelayed({ doNext() }, 900)
+            } else {
+                val correctLabel = if (target.capitalDisplay.isNotBlank()) target.capitalDisplay else target.names.firstOrNull() ?: ""
+                showFeedback(false, getString(R.string.wrong_format, correctLabel))
+                input.requestFocus()
+                input.selectAll()
+                showKeyboard()
+                submitBtn.text = if (engine.current + 1 == engineTotal()) getString(R.string.see_result) else getString(R.string.next)
+                answered = true
+            }
         }
     }
 
@@ -232,8 +307,8 @@ class MainActivity : AppCompatActivity() {
         resultHeader.text = getString(R.string.result_format, engine.score, engineTotal())
         summaryList.removeAllViews()
 
-        // persist this completed run
-        SaveGameStorage.saveRun(this, engine)
+        // persist this completed run (include mode)
+        SaveGameStorage.saveRun(this, engine, gameMode)
 
         val good = engine.goodList()
         val bad = engine.badList()
@@ -250,9 +325,9 @@ class MainActivity : AppCompatActivity() {
                 val flag = item.findViewById<TextView>(R.id.flag)
                 val correctAnswer = item.findViewById<TextView>(R.id.correct_answer)
                 val userAnswer = item.findViewById<TextView>(R.id.user_answer)
-
                 flag.text = g.flag
-                correctAnswer.text = g.displayName
+                // in capital mode, the correct answer is the capital
+                correctAnswer.text = if (gameMode == GameMode.COUNTRY_TO_CAPITAL) g.capitalDisplay else g.displayName
                 userAnswer.visibility = View.GONE
 
                 summaryList.addView(item)
@@ -272,7 +347,9 @@ class MainActivity : AppCompatActivity() {
                 val userAnswer = item.findViewById<TextView>(R.id.user_answer)
 
                 flag.text = b.flag
-                correctAnswer.text = getString(R.string.correct_label, b.displayName)
+                // show correct answer according to current mode
+                val correctText = if (gameMode == GameMode.COUNTRY_TO_CAPITAL) b.capitalDisplay else b.displayName
+                correctAnswer.text = getString(R.string.correct_label, correctText)
                 val user = if (!b.userGuess.isNullOrBlank()) b.userGuess else "<brak>"
                 userAnswer.text = getString(R.string.your_label, user)
                 userAnswer.visibility = View.VISIBLE
