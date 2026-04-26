@@ -12,9 +12,6 @@ class GameEngine(private val total: Int = 10) {
     var score = 0
         private set
 
-    val isFinished: Boolean
-        get() = ::pool.isInitialized && current >= total
-
     fun setCountries(list: List<Country>) {
         _countries.clear()
         _countries.addAll(list)
@@ -28,7 +25,7 @@ class GameEngine(private val total: Int = 10) {
         // prefer countries not in avoidCodes, and among them prefer lower askedCounts
         val candidates = shuffled
             .filter { it.code !in avoidCodes }
-            .sortedWith(compareBy({ askedCounts[it.code] ?: 0 }, { it.code }))
+            .sortedWith(compareBy({ askedCounts[it.code] ?: 0 }, { rng.nextDouble() }))
             .toMutableList()
 
         val selected = mutableListOf<Country>()
@@ -39,14 +36,16 @@ class GameEngine(private val total: Int = 10) {
             val remainingNeeded = total - selected.size
             val fallback = shuffled
                 .filter { c -> selected.none { it.code == c.code } }
-                .sortedWith(compareBy({ askedCounts[it.code] ?: 0 }, { it.code }))
+                .sortedWith(compareBy({ askedCounts[it.code] ?: 0 }, { rng.nextDouble() }))
                 .take(remainingNeeded)
             selected.addAll(fallback)
         }
 
         pool = selected.map {
             it.norms = it.names.map { n -> normalize(n) }
+            it.capNorms = it.capitals.map { c -> normalize(c) }
             it.displayName = if (it.names.isNotEmpty()) it.names[0] else it.displayName
+            it.capitalDisplay = if (it.capitals.isNotEmpty()) it.capitals[0] else ""
             it.userGuess = null
             it.correct = false
             it
@@ -57,13 +56,25 @@ class GameEngine(private val total: Int = 10) {
 
     fun getCurrent(): Country = pool[current]
 
-    fun questionProgressText(): String = "Pytanie ${current + 1}/$total"
-
     fun checkAnswer(raw: String): Boolean {
         val g = normalize(raw)
         val target = pool[current]
         target.userGuess = raw
         val ok = target.norms.contains(g)
+        target.correct = ok
+        if (ok) score++
+        return ok
+    }
+
+    /**
+     * Check an answer when the user is guessing capitals (country -> capital).
+     * Uses the same normalization as checkAnswer().
+     */
+    fun checkCapitalAnswer(raw: String): Boolean {
+        val g = normalize(raw)
+        val target = pool[current]
+        target.userGuess = raw
+        val ok = target.capNorms.contains(g)
         target.correct = ok
         if (ok) score++
         return ok
@@ -82,8 +93,6 @@ class GameEngine(private val total: Int = 10) {
     fun goodList() = pool.filter { it.correct }
     fun badList() = pool.filter { !it.correct }
 
-    // Public accessors for read-only external access
-    fun getTotal(): Int = total
     fun getPoolReadOnly(): List<Country> = if (::pool.isInitialized) pool else emptyList()
     
     /** Restore engine state from an external pool snapshot. */

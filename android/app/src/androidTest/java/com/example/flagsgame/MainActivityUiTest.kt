@@ -3,14 +3,14 @@ package com.example.flagsgame
 import android.view.View
 import android.widget.LinearLayout
 import androidx.test.core.app.ActivityScenario
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
-import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
 import androidx.test.espresso.matcher.ViewMatchers.Visibility
-import org.hamcrest.Matchers.`is`
+import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -20,6 +20,11 @@ class MainActivityUiTest {
     @Test
     fun restart_hides_results_and_clears_summary() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            // choose default mode from startup dialog so tests can continue
+            var modeText = ""
+            scenario.onActivity { modeText = it.getString(R.string.mode_flag_to_country) }
+            onView(withText(modeText)).perform(click())
+
             scenario.onActivity { activity ->
                 // simulate showing results
                 val resultContainer = activity.findViewById<View>(R.id.resultContainer)
@@ -33,6 +38,9 @@ class MainActivityUiTest {
 
             // click restart
             onView(withId(R.id.restartBtn)).perform(click())
+
+            // select mode on the restart dialog so restart proceeds
+            onView(withText(modeText)).perform(click())
 
             // resultContainer should be gone
             onView(withId(R.id.resultContainer)).check(matches(withEffectiveVisibility(Visibility.GONE)))
@@ -48,6 +56,11 @@ class MainActivityUiTest {
     @Test
     fun restart_restores_gameplay_controls() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            // choose default mode from startup dialog so tests can continue
+            var modeText = ""
+            scenario.onActivity { modeText = it.getString(R.string.mode_flag_to_country) }
+            onView(withText(modeText)).perform(click())
+
             scenario.onActivity { activity ->
                 // simulate results state
                 activity.findViewById<View>(R.id.resultContainer).visibility = View.VISIBLE
@@ -59,6 +72,9 @@ class MainActivityUiTest {
             }
 
             onView(withId(R.id.restartBtn)).perform(click())
+
+            // select mode on the restart dialog so restart proceeds
+            onView(withText(modeText)).perform(click())
 
             // after restart, gameplay controls should be visible
             onView(withId(R.id.flag)).check(matches(withEffectiveVisibility(Visibility.VISIBLE)))

@@ -11,7 +11,7 @@ import java.util.Locale
 object SaveGameStorage {
     private const val FILE_NAME = "saved_games.json"
 
-    fun saveRun(context: Context, engine: GameEngine) {
+    fun saveRun(context: Context, engine: GameEngine, mode: GameMode = GameMode.FLAG_TO_COUNTRY) {
         try {
             val file = File(context.filesDir, FILE_NAME)
             val arr = if (file.exists()) {
@@ -27,6 +27,7 @@ object SaveGameStorage {
             // compute score from pool to avoid relying on mutable internal counters
             val computedScore = engine.getPoolReadOnly().count { it.correct }
             run.put("score", computedScore)
+            run.put("mode", mode.name)
             run.put("total", engineTotal(engine))
 
             val items = JSONArray()
@@ -74,12 +75,16 @@ object SaveGameStorage {
      * Return set of country codes that have been answered in previous saved runs.
      * An answered item is any item whose "result" is not "unanswered".
      */
-    fun getAnsweredCodes(context: Context): Set<String> {
+    fun getAnsweredCodes(context: Context): Set<String> = getAnsweredCodes(context, GameMode.FLAG_TO_COUNTRY)
+
+    fun getAnsweredCodes(context: Context, mode: GameMode): Set<String> {
         val codes = mutableSetOf<String>()
         try {
             val arr = readAll(context)
             for (i in 0 until arr.length()) {
                 val run = arr.getJSONObject(i)
+                val runMode = try { GameMode.valueOf(run.optString("mode", GameMode.FLAG_TO_COUNTRY.name)) } catch (_: Exception) { GameMode.FLAG_TO_COUNTRY }
+                if (runMode != mode) continue
                 val items = run.optJSONArray("items") ?: continue
                 for (j in 0 until items.length()) {
                     val it = items.getJSONObject(j)
@@ -99,12 +104,16 @@ object SaveGameStorage {
      * Return a map of country code -> number of times it appears in saved runs.
      * Counts all occurrences in saved runs (asked count), regardless of result.
      */
-    fun getAskedCounts(context: Context): Map<String, Int> {
+    fun getAskedCounts(context: Context): Map<String, Int> = getAskedCounts(context, GameMode.FLAG_TO_COUNTRY)
+
+    fun getAskedCounts(context: Context, mode: GameMode): Map<String, Int> {
         val counts = mutableMapOf<String, Int>()
         try {
             val arr = readAll(context)
             for (i in 0 until arr.length()) {
                 val run = arr.getJSONObject(i)
+                val runMode = try { GameMode.valueOf(run.optString("mode", GameMode.FLAG_TO_COUNTRY.name)) } catch (_: Exception) { GameMode.FLAG_TO_COUNTRY }
+                if (runMode != mode) continue
                 val items = run.optJSONArray("items") ?: continue
                 for (j in 0 until items.length()) {
                     val it = items.getJSONObject(j)

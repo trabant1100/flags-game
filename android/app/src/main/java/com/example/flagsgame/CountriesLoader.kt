@@ -15,7 +15,15 @@ object CountriesLoader {
             val namesArr = o.getJSONArray("names")
             val names = mutableListOf<String>()
             for (j in 0 until namesArr.length()) names.add(namesArr.getString(j))
-            list.add(Country(code, flag, names))
+            // optional capitals array
+            val capitals = mutableListOf<String>()
+            if (o.has("capitals") && !o.isNull("capitals")) {
+                val caps = o.getJSONArray("capitals")
+                for (j in 0 until caps.length()) capitals.add(caps.getString(j))
+            }
+            val country = Country(code, flag, names)
+            country.capitals = capitals
+            list.add(country)
         }
         return list
     }
