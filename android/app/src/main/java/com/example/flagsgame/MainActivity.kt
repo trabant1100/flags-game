@@ -27,6 +27,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var input: EditText
     private lateinit var submitBtn: Button
     private lateinit var idkBtn: Button
+    private lateinit var cancelBtn: Button
     private lateinit var feedbackTv: TextView
     private lateinit var resultContainer: LinearLayout
     private lateinit var resultHeader: TextView
@@ -52,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         input = findViewById(R.id.guessInput)
         submitBtn = findViewById(R.id.submitBtn)
         idkBtn = findViewById(R.id.idkBtn)
+        cancelBtn = findViewById(R.id.cancelBtn)
         feedbackTv = findViewById(R.id.feedback)
         resultContainer = findViewById(R.id.resultContainer)
         resultHeader = findViewById(R.id.resultHeader)
@@ -157,6 +159,24 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        cancelBtn.setOnClickListener {
+            // Cancel current run and return to start mode selection without saving the run
+            waitingForMode = true
+            val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+            builder.setTitle(getString(R.string.mode_prompt))
+                .setItems(arrayOf(getString(R.string.mode_flag_to_country), getString(R.string.mode_country_to_capital))) { _, which ->
+                    gameMode = if (which == 0) GameMode.FLAG_TO_COUNTRY else GameMode.COUNTRY_TO_CAPITAL
+                    waitingForMode = false
+                    // start a fresh game for the chosen mode (do not persist the cancelled run)
+                    val avoid2 = SaveGameStorage.getAnsweredCodes(this, gameMode)
+                    val counts2 = SaveGameStorage.getAskedCounts(this, gameMode)
+                    engine.startGame(avoid2, counts2)
+                    showQuestionUI()
+                }
+                .setCancelable(false)
+                .show()
+        }
+
         restartBtn.setOnClickListener {
             val avoid = SaveGameStorage.getAnsweredCodes(this)
             val counts = SaveGameStorage.getAskedCounts(this)
@@ -224,6 +244,7 @@ class MainActivity : AppCompatActivity() {
         input.visibility = View.VISIBLE
         submitBtn.visibility = View.VISIBLE
         idkBtn.visibility = View.VISIBLE
+        cancelBtn.visibility = View.VISIBLE
         feedbackTv.visibility = View.VISIBLE
         // also show title and progress during gameplay
         titleTv.visibility = View.VISIBLE
@@ -302,6 +323,7 @@ class MainActivity : AppCompatActivity() {
 
         resultContainer.visibility = View.VISIBLE
         restartBtn.visibility = View.VISIBLE
+        cancelBtn.visibility = View.GONE
         resultHeader.text = getString(R.string.result_format, engine.score, engineTotal())
         summaryList.removeAllViews()
 
