@@ -36,6 +36,13 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
         android:textSize="96sp" />
 
+    <com.example.flagsgame.MapView
+        android:id="@+id/mapView"
+        android:layout_width="match_parent"
+        android:layout_height="240dp"
+        android:layout_marginTop="12dp"
+        android:visibility="gone" />
+
     <EditText
         android:id="@+id/guessInput"
         android:layout_width="match_parent"

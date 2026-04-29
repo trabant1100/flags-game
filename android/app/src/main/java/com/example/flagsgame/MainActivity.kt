@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var submitBtn: Button
     private lateinit var idkBtn: Button
     private lateinit var cancelBtn: Button
+    private lateinit var mapView: MapView
     private lateinit var feedbackTv: TextView
     private lateinit var resultContainer: LinearLayout
     private lateinit var resultHeader: TextView
@@ -54,6 +55,7 @@ class MainActivity : AppCompatActivity() {
         submitBtn = findViewById(R.id.submitBtn)
         idkBtn = findViewById(R.id.idkBtn)
         cancelBtn = findViewById(R.id.cancelBtn)
+        mapView = findViewById(R.id.mapView)
         feedbackTv = findViewById(R.id.feedback)
         resultContainer = findViewById(R.id.resultContainer)
         resultHeader = findViewById(R.id.resultHeader)
@@ -75,8 +77,16 @@ class MainActivity : AppCompatActivity() {
             if (savedModeName.isNullOrEmpty()) {
                 val builder = androidx.appcompat.app.AlertDialog.Builder(this)
                 builder.setTitle(getString(R.string.mode_prompt))
-                    .setItems(arrayOf(getString(R.string.mode_flag_to_country), getString(R.string.mode_country_to_capital))) { _, which ->
-                            gameMode = if (which == 0) GameMode.FLAG_TO_COUNTRY else GameMode.COUNTRY_TO_CAPITAL
+                        .setItems(arrayOf(
+                            getString(R.string.mode_flag_to_country),
+                            getString(R.string.mode_country_to_capital),
+                            getString(R.string.mode_map_to_country)
+                        )) { _, which ->
+                            gameMode = when (which) {
+                                0 -> GameMode.FLAG_TO_COUNTRY
+                                1 -> GameMode.COUNTRY_TO_CAPITAL
+                                else -> GameMode.MAP_TO_COUNTRY
+                            }
                             // compute avoid/counts for chosen mode and start
                             val avoid2 = SaveGameStorage.getAnsweredCodes(this, gameMode)
                             val counts2 = SaveGameStorage.getAskedCounts(this, gameMode)
@@ -164,8 +174,16 @@ class MainActivity : AppCompatActivity() {
             waitingForMode = true
             val builder = androidx.appcompat.app.AlertDialog.Builder(this)
             builder.setTitle(getString(R.string.mode_prompt))
-                .setItems(arrayOf(getString(R.string.mode_flag_to_country), getString(R.string.mode_country_to_capital))) { _, which ->
-                    gameMode = if (which == 0) GameMode.FLAG_TO_COUNTRY else GameMode.COUNTRY_TO_CAPITAL
+                .setItems(arrayOf(
+                    getString(R.string.mode_flag_to_country),
+                    getString(R.string.mode_country_to_capital),
+                    getString(R.string.mode_map_to_country)
+                )) { _, which ->
+                    gameMode = when (which) {
+                        0 -> GameMode.FLAG_TO_COUNTRY
+                        1 -> GameMode.COUNTRY_TO_CAPITAL
+                        else -> GameMode.MAP_TO_COUNTRY
+                    }
                     waitingForMode = false
                     // start a fresh game for the chosen mode (do not persist the cancelled run)
                     val avoid2 = SaveGameStorage.getAnsweredCodes(this, gameMode)
@@ -184,8 +202,16 @@ class MainActivity : AppCompatActivity() {
             waitingForMode = true
             val builder = androidx.appcompat.app.AlertDialog.Builder(this)
             builder.setTitle(getString(R.string.mode_prompt))
-                .setItems(arrayOf(getString(R.string.mode_flag_to_country), getString(R.string.mode_country_to_capital))) { _, which ->
-                    gameMode = if (which == 0) GameMode.FLAG_TO_COUNTRY else GameMode.COUNTRY_TO_CAPITAL
+                .setItems(arrayOf(
+                    getString(R.string.mode_flag_to_country),
+                    getString(R.string.mode_country_to_capital),
+                    getString(R.string.mode_map_to_country)
+                )) { _, which ->
+                    gameMode = when (which) {
+                        0 -> GameMode.FLAG_TO_COUNTRY
+                        1 -> GameMode.COUNTRY_TO_CAPITAL
+                        else -> GameMode.MAP_TO_COUNTRY
+                    }
                     waitingForMode = false
                     engine.startGame(avoid, counts)
                     showQuestionUI()
@@ -240,7 +266,15 @@ class MainActivity : AppCompatActivity() {
         input.setText("")
         input.isEnabled = true
         // ensure gameplay controls are visible when showing a question
-        flagTv.visibility = View.VISIBLE
+        // for map mode show the mapView instead of the flag
+        if (gameMode == GameMode.MAP_TO_COUNTRY) {
+            flagTv.visibility = View.GONE
+            mapView.visibility = View.VISIBLE
+            mapView.highlight(engine.getCurrent())
+        } else {
+            flagTv.visibility = View.VISIBLE
+            mapView.visibility = View.GONE
+        }
         input.visibility = View.VISIBLE
         submitBtn.visibility = View.VISIBLE
         idkBtn.visibility = View.VISIBLE
@@ -266,7 +300,7 @@ class MainActivity : AppCompatActivity() {
             input.requestFocus()
             return
         }
-        if (gameMode == GameMode.FLAG_TO_COUNTRY) {
+        if (gameMode == GameMode.FLAG_TO_COUNTRY || gameMode == GameMode.MAP_TO_COUNTRY) {
             val ok = engine.checkAnswer(raw)
             if (ok) {
                 showFeedback(true, getString(R.string.correct))

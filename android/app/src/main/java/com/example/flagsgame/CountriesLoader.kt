@@ -21,7 +21,20 @@ object CountriesLoader {
                 val caps = o.getJSONArray("capitals")
                 for (j in 0 until caps.length()) capitals.add(caps.getString(j))
             }
+            // optional continent and shapes
+            val continent = if (o.has("continent")) o.optString("continent", "") else ""
+            val shapesMap = mutableMapOf<String, String>()
+            if (o.has("shapes") && !o.isNull("shapes")) {
+                val shapesObj = o.getJSONObject("shapes")
+                val keys = shapesObj.keys()
+                while (keys.hasNext()) {
+                    val k = keys.next()
+                    shapesMap[k] = shapesObj.optString(k, "")
+                }
+            }
             val country = Country(code, flag, names)
+            country.continent = continent
+            country.shapes = shapesMap
             country.capitals = capitals
             list.add(country)
         }

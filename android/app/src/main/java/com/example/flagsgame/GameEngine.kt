@@ -20,7 +20,10 @@ class GameEngine(private val total: Int = 10) {
 
     fun startGame(avoidCodes: Set<String> = emptySet(), askedCounts: Map<String, Int> = emptyMap(), seed: Long? = null) {
         val rng = if (seed != null) Random(seed) else Random(System.currentTimeMillis())
-        val shuffled = _countries.toMutableList().shuffled(rng)
+
+        // TODO tmp only europe for now, until we have better map data for other continents
+        val shuffled = _countries.filter { it.continent == "europe" }.shuffled(rng)
+//        val shuffled = _countries.toMutableList().shuffled(rng)
 
         // prefer countries not in avoidCodes, and among them prefer lower askedCounts
         val candidates = shuffled
