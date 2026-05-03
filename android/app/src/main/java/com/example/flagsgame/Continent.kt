@@ -10,7 +10,14 @@ enum class Continent(val drawable: Int) {
             }
         }
     },
-    ASIA(R.drawable.asia),
+    ASIA(R.drawable.asia) {
+        override fun getCodes(countryCode: String): List<String> {
+            return when (countryCode) {
+                "lb" -> listOf("lb", "lb-rect")
+                else -> listOf(countryCode)
+            }
+        }
+    },
     AFRICA(R.drawable.africa),
     NORTH_AMERICA(R.drawable.north_america),
     SOUTH_AMERICA(R.drawable.south_america)
@@ -18,10 +25,6 @@ enum class Continent(val drawable: Int) {
 
     open fun getCodes(countryCode: String) : List<String> {
         return listOf(countryCode)
-    }
-
-    fun getName(): String {
-        return name.lowercase().replace("_", "-")
     }
 
     companion object {

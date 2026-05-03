@@ -3,13 +3,16 @@ package com.example.flagsgame
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Path
 import android.graphics.Paint
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import com.dorukkangal.vectormaster.VectorMasterDrawable
+import androidx.core.graphics.PathParser
 
 /**
  * Simple view that draws SVG pathData strings for a continent map and highlights one country.
@@ -33,6 +36,7 @@ class MapView @JvmOverloads constructor(
     private var lastTouchX = 0f
     private var lastTouchY = 0f
     private var isPanning = false
+    private var zoomRect: RectF? = null
 
     init {
         scaleDetector =
@@ -54,17 +58,51 @@ class MapView @JvmOverloads constructor(
         gestureDetector = GestureDetector(ctx, object : GestureDetector.SimpleOnGestureListener() {
             override fun onDoubleTap(e: MotionEvent): Boolean {
                 // toggle zoom on double-tap: first zoom in, second zoom out
-                val target = if (scaleFactor < 1.5f) 2.0f else 1.0f
+                val calcScaleFactor = {
+                    // if we have a zoom rect, zoom to fit it; otherwise just zoom in centered on the tap
+                    if (zoomRect != null) {
+                        val viewWidth = width.toFloat()
+                        val viewHeight = height.toFloat()
+                        val zoomWidth = zoomRect!!.width()
+                        val zoomHeight = zoomRect!!.height()
+                        val scaleX = viewWidth / zoomWidth
+                        val scaleY = viewHeight / zoomHeight
+                        (0.9f * minOf(scaleX, scaleY)).coerceIn(minScale, maxScale)
+                    } else {
+                        2.0f
+                    }
+                }
+                val target = if (scaleFactor < 1.5f) calcScaleFactor() else 1.0f
                 val prev = scaleFactor
-                scaleFactor = target.coerceIn(minScale, maxScale)
+                scaleFactor = target
                 val fx = e.x
                 val fy = e.y
-                offsetX = fx - (fx - offsetX) * (scaleFactor / prev)
-                offsetY = fy - (fy - offsetY) * (scaleFactor / prev)
+                if (target == 1.0f) {
+                    // if resetting zoom, also reset pan
+                    offsetX = 0f
+                    offsetY = 0f
+                } else {
+                    // adjust offsets so scaling centers on the double-tap point
+                    offsetX = fx - (fx - offsetX) * (scaleFactor / prev)
+                    offsetY = fy - (fy - offsetY) * (scaleFactor / prev)
+                }
                 invalidate()
                 return true
             }
         })
+    }
+
+    /**
+     * Return bounding box for an Android `Path` in its local coordinates.
+     */
+    fun getPathBoundingBox(path: Path): RectF {
+        return try {
+            val r = RectF()
+            path.computeBounds(r, true)
+            r
+        } catch (e: Exception) {
+            RectF(0f, 0f, 0f, 0f)
+        }
     }
 
     fun highlight(country: Country) {
@@ -92,10 +130,22 @@ class MapView @JvmOverloads constructor(
             map.setBounds(0, 0, width, height)
 
             val codes = countryOnMap.getCodes()
+            var foundZoomRect = false
             for (code in codes) {
                 val pathModel = map.getPathModelByName(code.lowercase())
                 assert(pathModel != null) { "No path model found for country code $code" }
-                pathModel.fillColor = Color.parseColor("#4A90E2")
+                if (code.endsWith("-rect")) {
+                    // highlight the rectangle
+                    pathModel!!.strokeAlpha = 1.0f
+                    pathModel.strokeWidth *= (1 / scaleFactor)
+                    foundZoomRect = true
+                    zoomRect = getPathBoundingBox(pathModel.path)
+                } else {
+                    pathModel.fillColor = Color.parseColor("#4A90E2")
+                }
+            }
+            if (!foundZoomRect) {
+                zoomRect = null
             }
             map.draw(canvas)
             canvas.restore()
