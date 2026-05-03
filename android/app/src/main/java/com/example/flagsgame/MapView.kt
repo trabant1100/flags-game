@@ -81,12 +81,8 @@ class MapView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (highlighted != null) {
-            val continent = when (highlighted!!.continent) {
-                "europe" -> R.drawable.europe
-                "asia" -> R.drawable.asia
-                "africa" -> R.drawable.africa
-                else -> throw NotImplementedError("Continent ${highlighted!!.continent} not supported yet")
-            }
+            val countryOnMap = CountryOnMap(highlighted!!)
+            val continent = countryOnMap.continent.drawable
             val map = VectorMasterDrawable(context, continent)
             // draw with pan/zoom transforms
             canvas.save()
@@ -95,7 +91,7 @@ class MapView @JvmOverloads constructor(
 
             map.setBounds(0, 0, width, height)
 
-            val codes = CountryOnMap(highlighted!!).getCodes()
+            val codes = countryOnMap.getCodes()
             for (code in codes) {
                 val pathModel = map.getPathModelByName(code.lowercase())
                 assert(pathModel != null) { "No path model found for country code $code" }
