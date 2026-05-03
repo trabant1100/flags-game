@@ -84,6 +84,7 @@ class MapView @JvmOverloads constructor(
             val continent = when (highlighted!!.continent) {
                 "europe" -> R.drawable.europe
                 "asia" -> R.drawable.asia
+                "africa" -> R.drawable.africa
                 else -> throw NotImplementedError("Continent ${highlighted!!.continent} not supported yet")
             }
             val map = VectorMasterDrawable(context, continent)

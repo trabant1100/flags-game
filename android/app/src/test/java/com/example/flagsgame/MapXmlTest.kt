@@ -62,4 +62,9 @@ class MapXmlTest {
     fun asiaXml_containsAllAsianCodes() {
         assertXmlContainsAll("asia", "src/main/res/drawable/asia.xml")
     }
+
+    @Test
+    fun africaXml_containsAllAfricanCodes() {
+        assertXmlContainsAll("africa", "src/main/res/drawable/africa.xml")
+    }
 }
