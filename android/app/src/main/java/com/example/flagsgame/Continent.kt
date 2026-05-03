@@ -20,9 +20,9 @@ enum class Continent(val drawable: Int) {
         return listOf(countryCode)
     }
 
-//    fun getDrawable(): Int {
-//        return drawable
-//    }
+    fun getName(): String {
+        return name.lowercase().replace("_", "-")
+    }
 
     companion object {
         fun fromName(name: String): Continent {
