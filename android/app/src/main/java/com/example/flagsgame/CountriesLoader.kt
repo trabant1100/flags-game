@@ -5,8 +5,13 @@ import org.json.JSONArray
 
 object CountriesLoader {
     fun loadFromAssets(context: Context, assetName: String = "countries.json"): MutableList<Country> {
-        val list = mutableListOf<Country>()
         val json = context.assets.open(assetName).bufferedReader().use { it.readText() }
+        return loadFromJsonString(json)
+    }
+
+    // Public helper to parse countries from a JSON string (useful in JVM tests)
+    fun loadFromJsonString(json: String): MutableList<Country> {
+        val list = mutableListOf<Country>()
         val arr = JSONArray(json)
         for (i in 0 until arr.length()) {
             val o = arr.getJSONObject(i)
@@ -23,18 +28,8 @@ object CountriesLoader {
             }
             // optional continent and shapes
             val continent = if (o.has("continent")) o.optString("continent", "") else ""
-            val shapesMap = mutableMapOf<String, String>()
-            if (o.has("shapes") && !o.isNull("shapes")) {
-                val shapesObj = o.getJSONObject("shapes")
-                val keys = shapesObj.keys()
-                while (keys.hasNext()) {
-                    val k = keys.next()
-                    shapesMap[k] = shapesObj.optString(k, "")
-                }
-            }
             val country = Country(code, flag, names)
             country.continent = continent
-            country.shapes = shapesMap
             country.capitals = capitals
             list.add(country)
         }

@@ -43,9 +43,12 @@ class MapView @JvmOverloads constructor(
         map.setBounds(0, 0, width, height)
 
         if (highlighted != null) {
-            val pathModel = map.getPathModelByName(highlighted!!.code.lowercase())
-            assert(pathModel != null) { "No path model found for country code ${highlighted!!.code}" }
-            pathModel.fillColor = Color.parseColor("#4A90E2")
+            val codes = CountryOnMap(highlighted!!).getCodes()
+            for (code in codes) {
+                 val pathModel = map.getPathModelByName(code.lowercase())
+                assert(pathModel != null) { "No path model found for country code $code" }
+                pathModel.fillColor = Color.parseColor("#4A90E2")
+            }
         }
         map.draw(canvas)
         // draw a simple demo triangle so the view isn't blank during development
