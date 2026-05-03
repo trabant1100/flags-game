@@ -16,7 +16,7 @@ enum class Continent(val drawable: Int) {
     SOUTH_AMERICA(R.drawable.south_america)
     ;
 
-    private val rects = listOf("ae", "lb");
+    private val rects = listOf("ae", "bd", "lb", "hk", "lk", "il", "sg");
 
     open fun getCodes(countryCode: String) : List<String> {
         if (countryCode in rects) {

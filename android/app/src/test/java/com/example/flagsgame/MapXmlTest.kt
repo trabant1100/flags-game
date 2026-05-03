@@ -48,6 +48,7 @@ class MapXmlTest {
         val expected = loadCodesForContinent(continent)
         val names = pathNamesFromXml(xmlPath)
         val missing = expected.filter { it !in names }
+        println(expected.sorted())
         if (missing.isNotEmpty()) {
             fail("$xmlPath is missing paths for codes: ${missing.joinToString(", ")}")
         }
