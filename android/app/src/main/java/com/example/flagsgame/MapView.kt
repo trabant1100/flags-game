@@ -5,6 +5,9 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
+import android.view.GestureDetector
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import com.dorukkangal.vectormaster.VectorMasterDrawable
 
@@ -16,79 +19,115 @@ import com.dorukkangal.vectormaster.VectorMasterDrawable
 class MapView @JvmOverloads constructor(
     ctx: Context, attrs: AttributeSet? = null
 ) : View(ctx, attrs) {
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val stroke = Paint(Paint.ANTI_ALIAS_FLAG)
     private var highlighted: Country? = null
+    // transform state for pan & zoom
+    private var scaleFactor = 1.0f
+    private var minScale = 0.5f
+    private var maxScale = 6.0f
+    private var offsetX = 0f
+    private var offsetY = 0f
+
+    private val scaleDetector: ScaleGestureDetector
+    private val gestureDetector: GestureDetector
+    private var lastTouchX = 0f
+    private var lastTouchY = 0f
+    private var isPanning = false
 
     init {
-        paint.style = Paint.Style.FILL
-        paint.color = Color.LTGRAY
-        stroke.style = Paint.Style.STROKE
-        stroke.strokeWidth = 2f
-        stroke.color = Color.DKGRAY
+        scaleDetector = ScaleGestureDetector(ctx, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            override fun onScale(detector: ScaleGestureDetector): Boolean {
+                val prev = scaleFactor
+                scaleFactor *= detector.scaleFactor
+                scaleFactor = scaleFactor.coerceIn(minScale, maxScale)
+                // adjust offsets so scaling centers on the gesture focal point
+                val focusX = detector.focusX
+                val focusY = detector.focusY
+                offsetX = focusX - (focusX - offsetX) * (scaleFactor / prev)
+                offsetY = focusY - (focusY - offsetY) * (scaleFactor / prev)
+                invalidate()
+                return true
+            }
+        })
+
+        gestureDetector = GestureDetector(ctx, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                // toggle zoom on double-tap: first zoom in, second zoom out
+                val target = if (scaleFactor < 1.5f) 2.0f else 1.0f
+                val prev = scaleFactor
+                scaleFactor = target.coerceIn(minScale, maxScale)
+                val fx = e.x
+                val fy = e.y
+                offsetX = fx - (fx - offsetX) * (scaleFactor / prev)
+                offsetY = fy - (fy - offsetY) * (scaleFactor / prev)
+                invalidate()
+                return true
+            }
+        })
     }
 
     fun highlight(country: Country) {
         highlighted = country
+        // reset pan/zoom when showing a new question
+        scaleFactor = 1.0f
+        offsetX = 0f
+        offsetY = 0f
+        lastTouchX = 0f
+        lastTouchY = 0f
         invalidate()
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-//            val map = context.getDrawable(R.drawable.europe)
-//            map?.setBounds(0, 0, width, height)
-//            map?.draw(canvas)
-
         val map = VectorMasterDrawable(context, R.drawable.europe)
+        // draw with pan/zoom transforms
+        canvas.save()
+        canvas.translate(offsetX, offsetY)
+        canvas.scale(scaleFactor, scaleFactor)
+
         map.setBounds(0, 0, width, height)
 
         if (highlighted != null) {
             val codes = CountryOnMap(highlighted!!).getCodes()
             for (code in codes) {
-                 val pathModel = map.getPathModelByName(code.lowercase())
+                val pathModel = map.getPathModelByName(code.lowercase())
                 assert(pathModel != null) { "No path model found for country code $code" }
                 pathModel.fillColor = Color.parseColor("#4A90E2")
             }
         }
         map.draw(canvas)
-        // draw a simple demo triangle so the view isn't blank during development
-        /*val demo = Path()
-        val left = width * 0.2f
-        val right = width * 0.8f
-        val top = height * 0.2f
-        val bottom = height * 0.75f
-        demo.moveTo(left, top)
-        demo.lineTo(right, top)
-        demo.lineTo((left + right) / 2f, bottom)
-        demo.close()
-        paint.color = Color.LTGRAY
-        canvas.drawPath(demo, paint)
-        canvas.drawPath(demo, stroke)
-        return */
+        canvas.restore()
     }
 
-    // simple scale to fit
-//        val bounds = android.graphics.RectF()
-//        for (p in countryPaths.values) p.computeBounds(bounds, true)
-//        val scaleX = width / bounds.width()
-//        val scaleY = height / bounds.height()
-//        val scale = minOf(scaleX, scaleY) * 0.95f
-//        val tx = -bounds.left * scale + (width - bounds.width() * scale) / 2f
-//        val ty = -bounds.top * scale + (height - bounds.height() * scale) / 2f
-//
-//        canvas.save()
-//        canvas.translate(tx, ty)
-//        canvas.scale(scale, scale)
-//
-//        for ((code, path) in countryPaths) {
-//            if (code == highlighted) {
-//                paint.color = Color.parseColor("#4A90E2")
-//            } else {
-//                paint.color = Color.LTGRAY
-//            }
-//            canvas.drawPath(path, paint)
-//            canvas.drawPath(path, stroke)
-//        }
-//
-//        canvas.restore()
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        // let detectors process first
+        scaleDetector.onTouchEvent(event)
+        gestureDetector.onTouchEvent(event)
+
+        val action = event.actionMasked
+        when (action) {
+            MotionEvent.ACTION_DOWN -> {
+                lastTouchX = event.x
+                lastTouchY = event.y
+                // only allow panning when zoomed in
+                isPanning = scaleFactor > 1.0f
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (!scaleDetector.isInProgress && isPanning) {
+                    val x = event.x
+                    val y = event.y
+                    val dx = x - lastTouchX
+                    val dy = y - lastTouchY
+                    offsetX += dx
+                    offsetY += dy
+                    lastTouchX = x
+                    lastTouchY = y
+                    invalidate()
+                }
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                isPanning = false
+            }
+        }
+        return true
+    }
 }
