@@ -12,7 +12,9 @@ enum class Continent(val drawable: Int) {
     },
     ASIA(R.drawable.asia),
     AFRICA(R.drawable.africa),
-    NORTH_AMERICA(R.drawable.north_america),;
+    NORTH_AMERICA(R.drawable.north_america),
+    SOUTH_AMERICA(R.drawable.south_america)
+    ;
 
     open fun getCodes(countryCode: String) : List<String> {
         return listOf(countryCode)

@@ -72,4 +72,9 @@ class MapXmlTest {
     fun northAmericaXml_containsAllNorthAmericanCodes() {
         assertXmlContainsAll("north-america", "src/main/res/drawable/north_america.xml")
     }
+
+    @Test
+    fun southAmericaXml_containsAllSouthAmericanCodes() {
+        assertXmlContainsAll("south-america", "src/main/res/drawable/south_america.xml")
+    }
 }
