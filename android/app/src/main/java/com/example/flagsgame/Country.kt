@@ -8,6 +8,7 @@ data class Country(
     var capitals: List<String> = listOf(),
     var capNorms: List<String> = listOf(),
     var capitalDisplay: String = "",
+    var continent: String = "",
     var displayName: String = "",
     var userGuess: String? = null,
     var correct: Boolean = false

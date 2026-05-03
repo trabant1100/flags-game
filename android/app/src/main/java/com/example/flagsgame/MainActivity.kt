@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var submitBtn: Button
     private lateinit var idkBtn: Button
     private lateinit var cancelBtn: Button
+    private lateinit var mapView: MapView
     private lateinit var feedbackTv: TextView
     private lateinit var resultContainer: LinearLayout
     private lateinit var resultHeader: TextView
@@ -54,6 +55,7 @@ class MainActivity : AppCompatActivity() {
         submitBtn = findViewById(R.id.submitBtn)
         idkBtn = findViewById(R.id.idkBtn)
         cancelBtn = findViewById(R.id.cancelBtn)
+        mapView = findViewById(R.id.mapView)
         feedbackTv = findViewById(R.id.feedback)
         resultContainer = findViewById(R.id.resultContainer)
         resultHeader = findViewById(R.id.resultHeader)
@@ -73,18 +75,24 @@ class MainActivity : AppCompatActivity() {
             }
             // if mode wasn't restored, ask the user which mode to play
             if (savedModeName.isNullOrEmpty()) {
-                val builder = androidx.appcompat.app.AlertDialog.Builder(this)
-                builder.setTitle(getString(R.string.mode_prompt))
-                    .setItems(arrayOf(getString(R.string.mode_flag_to_country), getString(R.string.mode_country_to_capital))) { _, which ->
-                            gameMode = if (which == 0) GameMode.FLAG_TO_COUNTRY else GameMode.COUNTRY_TO_CAPITAL
-                            // compute avoid/counts for chosen mode and start
+                showModeSelection { chosenMode ->
+                    gameMode = chosenMode
+                    if (gameMode == GameMode.MAP_TO_COUNTRY) {
+                        showContinentSelection { chosenCont ->
+                            val filtered = if (chosenCont == "Wszystkie") list else list.filter { it.continent == chosenCont }
+                            engine.setCountries(filtered)
                             val avoid2 = SaveGameStorage.getAnsweredCodes(this, gameMode)
                             val counts2 = SaveGameStorage.getAskedCounts(this, gameMode)
                             engine.startGame(avoid2, counts2)
                             showQuestionUI()
                         }
-                    .setCancelable(false)
-                    .show()
+                    } else {
+                        val avoid2 = SaveGameStorage.getAnsweredCodes(this, gameMode)
+                        val counts2 = SaveGameStorage.getAskedCounts(this, gameMode)
+                        engine.startGame(avoid2, counts2)
+                        showQuestionUI()
+                    }
+                }
                 waitingForMode = true
             }
             if (!savedJson.isNullOrEmpty()) {
@@ -162,19 +170,27 @@ class MainActivity : AppCompatActivity() {
         cancelBtn.setOnClickListener {
             // Cancel current run and return to start mode selection without saving the run
             waitingForMode = true
-            val builder = androidx.appcompat.app.AlertDialog.Builder(this)
-            builder.setTitle(getString(R.string.mode_prompt))
-                .setItems(arrayOf(getString(R.string.mode_flag_to_country), getString(R.string.mode_country_to_capital))) { _, which ->
-                    gameMode = if (which == 0) GameMode.FLAG_TO_COUNTRY else GameMode.COUNTRY_TO_CAPITAL
-                    waitingForMode = false
-                    // start a fresh game for the chosen mode (do not persist the cancelled run)
+            showModeSelection { chosenMode ->
+                gameMode = chosenMode
+                waitingForMode = false
+                val list = CountriesLoader.loadFromAssets(this)
+                if (gameMode == GameMode.MAP_TO_COUNTRY) {
+                    showContinentSelection { chosenCont ->
+                        val filtered = if (chosenCont == "Wszystkie") list else list.filter { it.continent == chosenCont }
+                        engine.setCountries(filtered)
+                        val avoid2 = SaveGameStorage.getAnsweredCodes(this, gameMode)
+                        val counts2 = SaveGameStorage.getAskedCounts(this, gameMode)
+                        engine.startGame(avoid2, counts2)
+                        showQuestionUI()
+                    }
+                } else {
+                    engine.setCountries(list)
                     val avoid2 = SaveGameStorage.getAnsweredCodes(this, gameMode)
                     val counts2 = SaveGameStorage.getAskedCounts(this, gameMode)
                     engine.startGame(avoid2, counts2)
                     showQuestionUI()
                 }
-                .setCancelable(false)
-                .show()
+            }
         }
 
         restartBtn.setOnClickListener {
@@ -182,16 +198,23 @@ class MainActivity : AppCompatActivity() {
             val counts = SaveGameStorage.getAskedCounts(this)
             // ask user which mode to play on restart (same as app start)
             waitingForMode = true
-            val builder = androidx.appcompat.app.AlertDialog.Builder(this)
-            builder.setTitle(getString(R.string.mode_prompt))
-                .setItems(arrayOf(getString(R.string.mode_flag_to_country), getString(R.string.mode_country_to_capital))) { _, which ->
-                    gameMode = if (which == 0) GameMode.FLAG_TO_COUNTRY else GameMode.COUNTRY_TO_CAPITAL
-                    waitingForMode = false
+            showModeSelection { chosenMode ->
+                val list = CountriesLoader.loadFromAssets(this)
+                engine.setCountries(list)
+                gameMode = chosenMode
+                waitingForMode = false
+                if (gameMode == GameMode.MAP_TO_COUNTRY) {
+                    showContinentSelection { chosenCont ->
+                        val filtered = if (chosenCont == "Wszystkie") list else list.filter { it.continent == chosenCont }
+                        engine.setCountries(filtered)
+                        engine.startGame(avoid, counts)
+                        showQuestionUI()
+                    }
+                } else {
                     engine.startGame(avoid, counts)
                     showQuestionUI()
                 }
-                .setCancelable(false)
-                .show()
+            }
         }
 
         // only show question UI immediately if mode was chosen (not waiting on dialog)
@@ -240,7 +263,15 @@ class MainActivity : AppCompatActivity() {
         input.setText("")
         input.isEnabled = true
         // ensure gameplay controls are visible when showing a question
-        flagTv.visibility = View.VISIBLE
+        // for map mode show the mapView instead of the flag
+        if (gameMode == GameMode.MAP_TO_COUNTRY) {
+            flagTv.visibility = View.GONE
+            mapView.visibility = View.VISIBLE
+            mapView.highlight(engine.getCurrent())
+        } else {
+            flagTv.visibility = View.VISIBLE
+            mapView.visibility = View.GONE
+        }
         input.visibility = View.VISIBLE
         submitBtn.visibility = View.VISIBLE
         idkBtn.visibility = View.VISIBLE
@@ -258,6 +289,38 @@ class MainActivity : AppCompatActivity() {
         answered = false
     }
 
+    private fun showModeSelection(onChosen: (GameMode) -> Unit) {
+        val items = arrayOf(
+            getString(R.string.mode_flag_to_country),
+            getString(R.string.mode_country_to_capital),
+            getString(R.string.mode_map_to_country)
+        )
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(getString(R.string.mode_prompt))
+            .setItems(items) { _, which ->
+                val gm = when (which) {
+                    0 -> GameMode.FLAG_TO_COUNTRY
+                    1 -> GameMode.COUNTRY_TO_CAPITAL
+                    else -> GameMode.MAP_TO_COUNTRY
+                }
+                onChosen(gm)
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun showContinentSelection(onChosen: (String) -> Unit) {
+        val contLabels = arrayOf("Wszystkie kontynenty", "Afryka", "Azja", "Europa", "Ameryka Północna", "Ameryka Południowa")
+        val continents = arrayOf("Wszystkie", "africa", "asia", "europe", "north-america", "south-america")
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Wybierz kontynent")
+            .setItems(contLabels) { _, cidx ->
+                onChosen(continents[cidx])
+            }
+            .setCancelable(false)
+            .show()
+    }
+
     private fun doCheck() {
         val raw = input.text.toString().trim()
         if (TextUtils.isEmpty(raw)) {
@@ -266,7 +329,7 @@ class MainActivity : AppCompatActivity() {
             input.requestFocus()
             return
         }
-        if (gameMode == GameMode.FLAG_TO_COUNTRY) {
+        if (gameMode == GameMode.FLAG_TO_COUNTRY || gameMode == GameMode.MAP_TO_COUNTRY) {
             val ok = engine.checkAnswer(raw)
             if (ok) {
                 showFeedback(true, getString(R.string.correct))
