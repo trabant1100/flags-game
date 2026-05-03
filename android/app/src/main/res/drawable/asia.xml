@@ -303,5 +303,12 @@
         android:strokeColor="#000000"
         android:strokeAlpha="0"
         android:strokeWidth="4.89243"
-        android:pathData="M2.44621,454.426 L37.6669,454.426 L37.6669,519.321 L2.44621,519.321 L2.44621,454.426 Z" />
+        android:pathData="M2.44621,454.426 L37.6672,454.426 L37.6672,519.321 L2.44621,519.321 L2.44621,454.426 Z" />
+    <path
+        android:name="ae-rect"
+        android:fillAlpha="0.95"
+        android:strokeColor="#000000"
+        android:strokeAlpha="0"
+        android:strokeWidth="7.97835"
+        android:pathData="M53.0866,497.887 L120.899,497.887 L120.899,587.523 L53.0866,587.523 L53.0866,497.887 Z" />
 </vector>

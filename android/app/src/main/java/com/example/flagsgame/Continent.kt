@@ -6,24 +6,22 @@ enum class Continent(val drawable: Int) {
             return when (countryCode) {
                 "ru" -> listOf("ru-main", "ru-kaliningrad")
                 "mt" -> listOf("mt-malta", "mt-gozo")
-                else -> listOf(countryCode)
+                else -> super.getCodes(countryCode)
             }
         }
     },
-    ASIA(R.drawable.asia) {
-        override fun getCodes(countryCode: String): List<String> {
-            return when (countryCode) {
-                "lb" -> listOf("lb", "lb-rect")
-                else -> listOf(countryCode)
-            }
-        }
-    },
+    ASIA(R.drawable.asia),
     AFRICA(R.drawable.africa),
     NORTH_AMERICA(R.drawable.north_america),
     SOUTH_AMERICA(R.drawable.south_america)
     ;
 
+    private val rects = listOf("ae", "lb");
+
     open fun getCodes(countryCode: String) : List<String> {
+        if (countryCode in rects) {
+            return listOf(countryCode, "$countryCode-rect")
+        }
         return listOf(countryCode)
     }
 
