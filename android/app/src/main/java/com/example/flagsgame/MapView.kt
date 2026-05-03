@@ -20,6 +20,7 @@ class MapView @JvmOverloads constructor(
     ctx: Context, attrs: AttributeSet? = null
 ) : View(ctx, attrs) {
     private var highlighted: Country? = null
+
     // transform state for pan & zoom
     private var scaleFactor = 1.0f
     private var minScale = 0.5f
@@ -34,20 +35,21 @@ class MapView @JvmOverloads constructor(
     private var isPanning = false
 
     init {
-        scaleDetector = ScaleGestureDetector(ctx, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-            override fun onScale(detector: ScaleGestureDetector): Boolean {
-                val prev = scaleFactor
-                scaleFactor *= detector.scaleFactor
-                scaleFactor = scaleFactor.coerceIn(minScale, maxScale)
-                // adjust offsets so scaling centers on the gesture focal point
-                val focusX = detector.focusX
-                val focusY = detector.focusY
-                offsetX = focusX - (focusX - offsetX) * (scaleFactor / prev)
-                offsetY = focusY - (focusY - offsetY) * (scaleFactor / prev)
-                invalidate()
-                return true
-            }
-        })
+        scaleDetector =
+            ScaleGestureDetector(ctx, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                override fun onScale(detector: ScaleGestureDetector): Boolean {
+                    val prev = scaleFactor
+                    scaleFactor *= detector.scaleFactor
+                    scaleFactor = scaleFactor.coerceIn(minScale, maxScale)
+                    // adjust offsets so scaling centers on the gesture focal point
+                    val focusX = detector.focusX
+                    val focusY = detector.focusY
+                    offsetX = focusX - (focusX - offsetX) * (scaleFactor / prev)
+                    offsetY = focusY - (focusY - offsetY) * (scaleFactor / prev)
+                    invalidate()
+                    return true
+                }
+            })
 
         gestureDetector = GestureDetector(ctx, object : GestureDetector.SimpleOnGestureListener() {
             override fun onDoubleTap(e: MotionEvent): Boolean {
@@ -78,24 +80,30 @@ class MapView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val map = VectorMasterDrawable(context, R.drawable.europe)
-        // draw with pan/zoom transforms
-        canvas.save()
-        canvas.translate(offsetX, offsetY)
-        canvas.scale(scaleFactor, scaleFactor)
-
-        map.setBounds(0, 0, width, height)
-
         if (highlighted != null) {
+            val continent = when (highlighted!!.continent) {
+                "europe" -> R.drawable.europe
+                "asia" -> R.drawable.asia
+                else -> throw NotImplementedError("Continent ${highlighted!!.continent} not supported yet")
+            }
+            val map = VectorMasterDrawable(context, continent)
+            // draw with pan/zoom transforms
+            canvas.save()
+            canvas.translate(offsetX, offsetY)
+            canvas.scale(scaleFactor, scaleFactor)
+
+            map.setBounds(0, 0, width, height)
+
             val codes = CountryOnMap(highlighted!!).getCodes()
             for (code in codes) {
                 val pathModel = map.getPathModelByName(code.lowercase())
                 assert(pathModel != null) { "No path model found for country code $code" }
                 pathModel.fillColor = Color.parseColor("#4A90E2")
             }
+            map.draw(canvas)
+            canvas.restore()
         }
-        map.draw(canvas)
-        canvas.restore()
+
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -111,6 +119,7 @@ class MapView @JvmOverloads constructor(
                 // only allow panning when zoomed in
                 isPanning = scaleFactor > 1.0f
             }
+
             MotionEvent.ACTION_MOVE -> {
                 if (!scaleDetector.isInProgress && isPanning) {
                     val x = event.x
@@ -124,6 +133,7 @@ class MapView @JvmOverloads constructor(
                     invalidate()
                 }
             }
+
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 isPanning = false
             }
