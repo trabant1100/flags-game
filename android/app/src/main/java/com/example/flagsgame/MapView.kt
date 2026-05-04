@@ -3,8 +3,8 @@ package com.example.flagsgame
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Path
-import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.GestureDetector
@@ -12,7 +12,6 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import com.dorukkangal.vectormaster.VectorMasterDrawable
-import androidx.core.graphics.PathParser
 
 /**
  * Simple view that draws SVG pathData strings for a continent map and highlights one country.
@@ -133,14 +132,26 @@ class MapView @JvmOverloads constructor(
             var foundZoomRect = false
             for (code in codes) {
                 val pathModel = map.getPathModelByName(code.lowercase())
-                assert(pathModel != null) { "No path model found for country code $code" }
                 if (code.endsWith("-rect")) {
                     // highlight the rectangle
                     pathModel!!.strokeAlpha = 1.0f
                     pathModel.strokeWidth *= (1 / scaleFactor)
                     foundZoomRect = true
                     zoomRect = getPathBoundingBox(pathModel.path)
-                } else {
+                } else if(code.endsWith("-autorect")) {
+                    // generate a rectangle based on the bounding box of the path and highlight it
+                    val orgPathModel = map.getPathModelByName(code.substringBefore("-autorect").lowercase())
+                    val orgPathBound = getPathBoundingBox(orgPathModel!!.path)
+                    val rectModel = map.getPathModelByName("rect")
+                    val matrix = Matrix()
+                    matrix.setTranslate(orgPathBound.centerX() - 50, orgPathBound.centerY() - 50)
+                    rectModel.transform(matrix)
+                    rectModel.strokeAlpha = 0.5f
+                    rectModel.strokeWidth *= ((-0.1f) * scaleFactor + 1.1f)
+                    foundZoomRect = true
+                    zoomRect = getPathBoundingBox(rectModel.path)
+                }
+                else {
                     pathModel.fillColor = Color.parseColor("#4A90E2")
                 }
             }

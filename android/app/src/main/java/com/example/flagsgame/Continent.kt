@@ -16,11 +16,19 @@ enum class Continent(val drawable: Int) {
     SOUTH_AMERICA(R.drawable.south_america)
     ;
 
-    private val rects = listOf("ae", "bd", "lb", "hk", "lk", "il", "sg");
+    private val rects = listOf(
+        "ae", "bd", "lb", "hk", "lk", "il", "sg", // rects in svg
+    )
+
+    private val autoRects = listOf(
+        "bi", "cv", "dj", "gm", "gw", "gq", "km", "ls", "mu", "rw", "sc", "st", "sz", // generate rects
+    )
 
     open fun getCodes(countryCode: String) : List<String> {
         if (countryCode in rects) {
             return listOf(countryCode, "$countryCode-rect")
+        } else if (countryCode in autoRects) {
+            return listOf(countryCode, "$countryCode-autorect")
         }
         return listOf(countryCode)
     }

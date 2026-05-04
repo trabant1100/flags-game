@@ -15,6 +15,7 @@ class MapXmlTest {
         val codes = countries.filter { it.continent.equals(continent, ignoreCase = true) }
             .map { CountryOnMap(it) }
             .flatMap { it.getCodes() }
+            .filter { !it.endsWith("-autorect") }
         if (codes.isEmpty()) fail("No $continent countries found in countries.json")
         return codes
     }
