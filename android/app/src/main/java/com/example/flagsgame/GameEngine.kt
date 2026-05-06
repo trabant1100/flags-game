@@ -60,25 +60,14 @@ class GameEngine(private val total: Int = 10) {
 
     fun getCurrent(): Country = pool[current]
 
-    fun checkAnswer(raw: String): Boolean {
+    fun checkAnswer(raw: String, mode: GameMode): Boolean {
         val g = normalize(raw)
         val target = pool[current]
         target.userGuess = raw
-        val ok = target.norms.contains(g)
-        target.correct = ok
-        if (ok) score++
-        return ok
-    }
-
-    /**
-     * Check an answer when the user is guessing capitals (country -> capital).
-     * Uses the same normalization as checkAnswer().
-     */
-    fun checkCapitalAnswer(raw: String): Boolean {
-        val g = normalize(raw)
-        val target = pool[current]
-        target.userGuess = raw
-        val ok = target.capNorms.contains(g)
+        val ok = when (mode) {
+            GameMode.COUNTRY_TO_CAPITAL -> target.capNorms.contains(g)
+            else -> target.norms.contains(g)
+        }
         target.correct = ok
         if (ok) score++
         return ok

@@ -16,7 +16,7 @@ class GameEngineCapitalCheckTest {
         engine.startGame(seed = 42L)
 
         // normalized input without diacritics should match
-        val ok1 = engine.checkCapitalAnswer("lodz")
+        val ok1 = engine.checkAnswer("lodz", GameMode.COUNTRY_TO_CAPITAL)
         assertTrue(ok1)
 
         // score should be incremented

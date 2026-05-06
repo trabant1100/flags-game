@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() {
             if (savedModeName.isNullOrEmpty()) {
                 showModeSelection { chosenMode ->
                     gameMode = chosenMode
-                    if (gameMode == GameMode.MAP_TO_COUNTRY) {
+                    if (gameMode.isMapMode) {
                         showContinentSelection { chosenCont ->
                             val filtered = if (chosenCont == "Wszystkie") list else list.filter { it.continent == chosenCont }
                             engine.setCountries(filtered)
@@ -156,12 +156,7 @@ class MainActivity : AppCompatActivity() {
             if (!answered) {
                 engine.markIDK(getString(R.string.idk))
                 // show correct answer depending on mode
-                val correctAns = if (gameMode == GameMode.COUNTRY_TO_CAPITAL) {
-                    val cd = engine.getCurrent().capitalDisplay
-                    cd.ifBlank { engine.getCurrent().displayName }
-                } else {
-                    engine.getCurrent().displayName
-                }
+                val correctAns = gameMode.getCorrectAnswer(engine.getCurrent())
                 showFeedback(false,
                     getString(R.string.wrong_format, correctAns), correctAns)
                 input.requestFocus()
@@ -178,7 +173,7 @@ class MainActivity : AppCompatActivity() {
                 gameMode = chosenMode
                 waitingForMode = false
                 val list = CountriesLoader.loadFromAssets(this)
-                if (gameMode == GameMode.MAP_TO_COUNTRY) {
+                if (gameMode.isMapMode) {
                     showContinentSelection { chosenCont ->
                         val filtered = if (chosenCont == "Wszystkie") list else list.filter { it.continent == chosenCont }
                         engine.setCountries(filtered)
@@ -207,7 +202,7 @@ class MainActivity : AppCompatActivity() {
                 engine.setCountries(list)
                 gameMode = chosenMode
                 waitingForMode = false
-                if (gameMode == GameMode.MAP_TO_COUNTRY) {
+                if (gameMode.isMapMode) {
                     showContinentSelection { chosenCont ->
                         val filtered = if (chosenCont == "Wszystkie") list else list.filter { it.continent == chosenCont }
                         engine.setCountries(filtered)
@@ -258,25 +253,16 @@ class MainActivity : AppCompatActivity() {
         flagTv.text = c.flag
         titleTv.setTextColor(titleTvOrgColor!!)
         // adjust UI depending on mode
-        if (gameMode == GameMode.COUNTRY_TO_CAPITAL) {
-            // show country name as title and adjust hint
-            titleTv.text = c.displayName
-            input.hint = getString(R.string.guess_capital_hint)
-            submitBtn.text = getString(R.string.check)
-        } else {
-            titleTv.text = if (gameMode == GameMode.FLAG_TO_COUNTRY) {
-                getString(R.string.app_name)
-            } else {
-                getString(R.string.map_mode)
-            }
-            input.hint = getString(R.string.guess_hint)
-        }
+        titleTv.text = gameMode.getTitle(this, c)
+        input.hint = getString(gameMode.hintRes)
+        submitBtn.text = getString(R.string.check)
+
         feedbackTv.text = ""
         input.setText("")
         input.isEnabled = true
         // ensure gameplay controls are visible when showing a question
         // for map mode show the mapView instead of the flag
-        if (gameMode == GameMode.MAP_TO_COUNTRY) {
+        if (gameMode.isMapMode) {
             flagTv.visibility = View.GONE
             mapView.visibility = View.VISIBLE
             mapView.highlight(engine.getCurrent())
@@ -302,20 +288,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showModeSelection(onChosen: (GameMode) -> Unit) {
-        val items = arrayOf(
-            getString(R.string.mode_flag_to_country),
-            getString(R.string.mode_country_to_capital),
-            getString(R.string.mode_map_to_country)
-        )
+        val modes = GameMode.entries.toTypedArray()
+        val items = modes.map { getString(it.modeNameRes) }.toTypedArray()
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(getString(R.string.mode_prompt))
             .setItems(items) { _, which ->
-                val gm = when (which) {
-                    0 -> GameMode.FLAG_TO_COUNTRY
-                    1 -> GameMode.COUNTRY_TO_CAPITAL
-                    else -> GameMode.MAP_TO_COUNTRY
-                }
-                onChosen(gm)
+                onChosen(modes[which])
             }
             .setCancelable(false)
             .show()
@@ -341,43 +319,22 @@ class MainActivity : AppCompatActivity() {
             input.requestFocus()
             return
         }
-        if (gameMode == GameMode.FLAG_TO_COUNTRY || gameMode == GameMode.MAP_TO_COUNTRY) {
-            val ok = engine.checkAnswer(raw)
-            if (ok) {
-                showFeedback(true, getString(R.string.correct))
-                input.requestFocus()
-                showKeyboard()
-                answered = true
-                Handler(Looper.getMainLooper()).postDelayed({ doNext() }, 900)
-            } else {
-                showFeedback(false, getString(R.string.wrong_format, engine.getCurrent().displayName),
-                    engine.getCurrent().displayName)
-                input.requestFocus()
-                input.selectAll()
-                showKeyboard()
-                submitBtn.text = if (engine.current + 1 == engineTotal()) getString(R.string.see_result) else getString(R.string.next)
-                answered = true
-            }
+
+        val ok = engine.checkAnswer(raw, gameMode)
+        if (ok) {
+            showFeedback(true, getString(R.string.correct))
+            input.requestFocus()
+            showKeyboard()
+            answered = true
+            Handler(Looper.getMainLooper()).postDelayed({ doNext() }, 900)
         } else {
-            // country -> capital mode: delegate to GameEngine for normalization/checking
-            val ok = engine.checkCapitalAnswer(raw)
-            val target = engine.getCurrent()
-            if (ok) {
-                showFeedback(true, getString(R.string.correct))
-                input.requestFocus()
-                showKeyboard()
-                answered = true
-                Handler(Looper.getMainLooper()).postDelayed({ doNext() }, 900)
-            } else {
-                val correctLabel = target.capitalDisplay.ifBlank { target.names.firstOrNull() ?: "" }
-                showFeedback(false,
-                    getString(R.string.wrong_format, correctLabel), correctLabel)
-                input.requestFocus()
-                input.selectAll()
-                showKeyboard()
-                submitBtn.text = if (engine.current + 1 == engineTotal()) getString(R.string.see_result) else getString(R.string.next)
-                answered = true
-            }
+            val correctAns = gameMode.getCorrectAnswer(engine.getCurrent())
+            showFeedback(false, getString(R.string.wrong_format, correctAns), correctAns)
+            input.requestFocus()
+            input.selectAll()
+            showKeyboard()
+            submitBtn.text = if (engine.current + 1 == engineTotal()) getString(R.string.see_result) else getString(R.string.next)
+            answered = true
         }
     }
 
@@ -424,7 +381,7 @@ class MainActivity : AppCompatActivity() {
                 val userAnswer = item.findViewById<TextView>(R.id.user_answer)
                 flag.text = g.flag
                 // in capital mode, the correct answer is the capital
-                correctAnswer.text = if (gameMode == GameMode.COUNTRY_TO_CAPITAL) g.capitalDisplay else g.displayName
+                correctAnswer.text = gameMode.getCorrectAnswer(g)
                 userAnswer.visibility = View.GONE
 
                 summaryList.addView(item)
@@ -445,7 +402,7 @@ class MainActivity : AppCompatActivity() {
 
                 flag.text = b.flag
                 // show correct answer according to current mode
-                val correctText = if (gameMode == GameMode.COUNTRY_TO_CAPITAL) b.capitalDisplay else b.displayName
+                val correctText = gameMode.getCorrectAnswer(b)
                 correctAnswer.text = getString(R.string.correct_label, correctText)
                 val user = if (!b.userGuess.isNullOrBlank()) b.userGuess else "<brak>"
                 userAnswer.text = getString(R.string.your_label, user)
@@ -467,7 +424,7 @@ class MainActivity : AppCompatActivity() {
         feedbackTv.setTextColor(ContextCompat.getColor(this, color))
         feedbackTv.text = text
 
-        if (gameMode == GameMode.MAP_TO_COUNTRY) {
+        if (gameMode.isMapMode) {
             titleTv.text = shortText
             titleTv.setTextColor(ContextCompat.getColor(this, color))
         }
