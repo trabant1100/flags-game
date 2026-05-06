@@ -21,7 +21,9 @@ enum class Continent(val drawable: Int) {
     )
 
     private val autoRects = listOf(
-        "bi", "cv", "dj", "gm", "gw", "gq", "km", "ls", "mu", "rw", "sc", "st", "sz", // generate rects
+        // generate rects
+        "bi", "cv", "dj", "gm", "gw", "gq", "km", "ls", "mu", "rw", "sc", "st", "sz",
+        "ad", "va", "mc", "li", "lu",
     )
 
     open fun getCodes(countryCode: String) : List<String> {

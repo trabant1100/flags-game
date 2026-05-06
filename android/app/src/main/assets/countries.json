@@ -131,5 +131,9 @@
 {"code": "TN", "flag": "🇹🇳", "names": ["Tunezja", "Tunezja"], "capitals": ["Tunis", "Tunis"], "continent": "africa"},
 {"code": "UG", "flag": "🇺🇬", "names": ["Uganda", "Uganda"], "capitals": ["Kampala", "Kampala"], "continent": "africa"},
 {"code": "ZM", "flag": "🇿🇲", "names": ["Zambia", "Zambia"], "capitals": ["Lusaka", "Lusaka"], "continent": "africa"},
+{"code": "AD", "flag": "🇦🇩", "names": ["Andora", "Andorra"], "capitals": ["Andora la Vella", "Andorra la Vella"], "continent": "europe"},
+{"code": "VA", "flag": "🇻🇦", "names": ["Watykan", "Stolica Apostolska"], "capitals": ["Watykan"], "continent": "europe"},
+{"code": "MC", "flag": "🇲🇨", "names": ["Monako", "Monaco"], "capitals": ["Monako"], "continent": "europe"},
+{"code": "LI", "flag": "🇱🇮", "names": ["Liechtenstein", "Lichtenstein"], "capitals": ["Vaduz"], "continent": "europe"},
 {"code": "ZW", "flag": "🇿🇼", "names": ["Zimbabwe", "Zimbabwe"], "capitals": ["Harare", "Harare"]}
 ]
