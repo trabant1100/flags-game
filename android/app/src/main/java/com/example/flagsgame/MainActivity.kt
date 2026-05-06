@@ -1,6 +1,7 @@
 package com.example.flagsgame
 
 // animations removed per user request
+import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -36,6 +37,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var restartBtn: Button
     private var gameMode: GameMode = GameMode.FLAG_TO_COUNTRY
     private var waitingForMode: Boolean = false
+
+    private var titleTvOrgColor: Int? = null
 
     companion object {
         private const val KEY_GAME_JSON = "game_state_json"
@@ -159,7 +162,8 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     engine.getCurrent().displayName
                 }
-                showFeedback(false, getString(R.string.wrong_format, correctAns))
+                showFeedback(false,
+                    getString(R.string.wrong_format, correctAns), correctAns)
                 input.requestFocus()
                 showKeyboard()
                 answered = true
@@ -246,9 +250,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showQuestionUI() {
+        if (titleTvOrgColor == null) {
+            titleTvOrgColor = feedbackTv.currentTextColor
+        }
         val c = engine.getCurrent()
         progressTv.text = getString(R.string.question, engine.current + 1, engineTotal())
         flagTv.text = c.flag
+        titleTv.setTextColor(titleTvOrgColor!!)
         // adjust UI depending on mode
         if (gameMode == GameMode.COUNTRY_TO_CAPITAL) {
             // show country name as title and adjust hint
@@ -256,7 +264,11 @@ class MainActivity : AppCompatActivity() {
             input.hint = getString(R.string.guess_capital_hint)
             submitBtn.text = getString(R.string.check)
         } else {
-            titleTv.text = getString(R.string.app_name)
+            titleTv.text = if (gameMode == GameMode.FLAG_TO_COUNTRY) {
+                getString(R.string.app_name)
+            } else {
+                getString(R.string.map_mode)
+            }
             input.hint = getString(R.string.guess_hint)
         }
         feedbackTv.text = ""
@@ -338,7 +350,8 @@ class MainActivity : AppCompatActivity() {
                 answered = true
                 Handler(Looper.getMainLooper()).postDelayed({ doNext() }, 900)
             } else {
-                showFeedback(false, getString(R.string.wrong_format, engine.getCurrent().displayName))
+                showFeedback(false, getString(R.string.wrong_format, engine.getCurrent().displayName),
+                    engine.getCurrent().displayName)
                 input.requestFocus()
                 input.selectAll()
                 showKeyboard()
@@ -357,7 +370,8 @@ class MainActivity : AppCompatActivity() {
                 Handler(Looper.getMainLooper()).postDelayed({ doNext() }, 900)
             } else {
                 val correctLabel = target.capitalDisplay.ifBlank { target.names.firstOrNull() ?: "" }
-                showFeedback(false, getString(R.string.wrong_format, correctLabel))
+                showFeedback(false,
+                    getString(R.string.wrong_format, correctLabel), correctLabel)
                 input.requestFocus()
                 input.selectAll()
                 showKeyboard()
@@ -448,10 +462,15 @@ class MainActivity : AppCompatActivity() {
         10
     }
 
-    private fun showFeedback(ok: Boolean, text: String) {
+    private fun showFeedback(ok: Boolean, text: String, shortText: String = text) {
         val color = if (ok) android.R.color.holo_green_dark else android.R.color.holo_red_dark
         feedbackTv.setTextColor(ContextCompat.getColor(this, color))
         feedbackTv.text = text
+
+        if (gameMode == GameMode.MAP_TO_COUNTRY) {
+            titleTv.text = shortText
+            titleTv.setTextColor(ContextCompat.getColor(this, color))
+        }
     }
 
     private fun showKeyboard() {

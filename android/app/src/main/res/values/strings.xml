@@ -25,4 +25,5 @@
     <string name="next">Następne</string>
     <string name="polish_flag">🇵🇱</string>
     <string name="cancel">Anuluj grę</string>
+    <string name="map_mode">Zgadnij kraj po granicach</string>
 </resources>
