@@ -24,7 +24,7 @@ class GameEngine(private val total: Int = 10) {
         val shuffled = _countries.toMutableList().shuffled(rng)
 
         // TODO tmp for display
-//            .filter { listOf("ad", "va", "mc", "li", "lu").contains(it.code.lowercase()) }
+//            .filter { listOf("fk").contains(it.code.lowercase()) }
 
         // prefer countries not in avoidCodes, and among them prefer lower askedCounts
         val candidates = shuffled

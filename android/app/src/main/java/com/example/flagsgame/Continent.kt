@@ -24,6 +24,7 @@ enum class Continent(val drawable: Int) {
         // generate rects
         "bi", "cv", "dj", "gm", "gw", "gq", "km", "ls", "mu", "rw", "sc", "st", "sz",
         "ad", "va", "mc", "li", "lu",
+        "fk",
     )
 
     open fun getCodes(countryCode: String) : List<String> {
