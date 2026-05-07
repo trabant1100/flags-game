@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.annotation.StringRes
 
 enum class GameMode(
-    @StringRes val modeNameRes: Int,
-    @StringRes val hintRes: Int,
+    @param:StringRes val modeNameRes: Int,
+    @param:StringRes val hintRes: Int,
     val isMapMode: Boolean = false
 ) {
     FLAG_TO_COUNTRY(

@@ -1,7 +1,6 @@
 package com.example.flagsgame
 
 // animations removed per user request
-import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper

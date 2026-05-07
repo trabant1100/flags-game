@@ -29,7 +29,7 @@ class GameEngine(private val total: Int = 10) {
         // prefer countries not in avoidCodes, and among them prefer lower askedCounts
         val candidates = shuffled
             .filter { it.code !in avoidCodes }
-            .sortedWith(compareBy({ askedCounts[it.code] ?: 0 }, { rng.nextDouble() }))
+            .sortedWith(compareBy({ askedCounts[it.code] ?: 0 }))
             .toMutableList()
 
         val selected = mutableListOf<Country>()
