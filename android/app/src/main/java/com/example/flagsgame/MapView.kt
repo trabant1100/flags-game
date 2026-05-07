@@ -1,17 +1,18 @@
 package com.example.flagsgame
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.MotionEvent
-import android.view.ScaleGestureDetector
 import android.view.View
 import com.dorukkangal.vectormaster.VectorMasterDrawable
 import com.dorukkangal.vectormaster.models.PathModel
+import androidx.core.graphics.withTranslation
+import androidx.core.graphics.toColorInt
 
 /**
  * Simple view that draws SVG pathData strings for a continent map and highlights one country.
@@ -30,7 +31,7 @@ class MapView @JvmOverloads constructor(
     private var offsetX = 0f
     private var offsetY = 0f
 
-    private val scaleDetector: ScaleGestureDetector
+//    private val scaleDetector: ScaleGestureDetector
     private val gestureDetector: GestureDetector
     private var lastTouchX = 0f
     private var lastTouchY = 0f
@@ -39,7 +40,7 @@ class MapView @JvmOverloads constructor(
 
     // Caching and pre-calculation to avoid allocations in onDraw
     private var vectorMasterDrawable: VectorMasterDrawable? = null
-    private val highlightColor = Color.parseColor("#4A90E2")
+    private val highlightColor = "#4A90E2".toColorInt()
     private val tempMatrix = Matrix()
     private val tempRect = RectF()
     private val internalZoomRect = RectF()
@@ -52,22 +53,6 @@ class MapView @JvmOverloads constructor(
     private val updates = mutableListOf<StrokeUpdate>()
 
     init {
-        scaleDetector =
-            ScaleGestureDetector(ctx, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-                override fun onScale(detector: ScaleGestureDetector): Boolean {
-                    val prev = scaleFactor
-                    scaleFactor *= detector.scaleFactor
-                    scaleFactor = scaleFactor.coerceIn(minScale, maxScale)
-                    // adjust offsets so scaling centers on the gesture focal point
-                    val focusX = detector.focusX
-                    val focusY = detector.focusY
-                    offsetX = focusX - (focusX - offsetX) * (scaleFactor / prev)
-                    offsetY = focusY - (focusY - offsetY) * (scaleFactor / prev)
-                    invalidate()
-                    return true
-                }
-            })
-
         gestureDetector = GestureDetector(ctx, object : GestureDetector.SimpleOnGestureListener() {
             override fun onDoubleTap(e: MotionEvent): Boolean {
                 // toggle zoom on double-tap: first zoom in, second zoom out
@@ -198,16 +183,15 @@ class MapView @JvmOverloads constructor(
             }
         }
 
-        canvas.save()
-        canvas.translate(offsetX, offsetY)
-        canvas.scale(scaleFactor, scaleFactor)
-        map.draw(canvas)
-        canvas.restore()
+        canvas.withTranslation(offsetX, offsetY) {
+            scale(scaleFactor, scaleFactor)
+            map.draw(this)
+        }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         // let detectors process first
-        scaleDetector.onTouchEvent(event)
         gestureDetector.onTouchEvent(event)
 
         val action = event.actionMasked
@@ -220,7 +204,7 @@ class MapView @JvmOverloads constructor(
             }
 
             MotionEvent.ACTION_MOVE -> {
-                if (!scaleDetector.isInProgress && isPanning) {
+                if (isPanning) {
                     val x = event.x
                     val y = event.y
                     val dx = x - lastTouchX

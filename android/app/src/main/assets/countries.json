@@ -136,5 +136,5 @@
 {"code": "MC", "flag": "🇲🇨", "names": ["Monako", "Monaco"], "capitals": ["Monako"], "continent": "europe"},
 {"code": "LI", "flag": "🇱🇮", "names": ["Liechtenstein", "Lichtenstein"], "capitals": ["Vaduz"], "continent": "europe"},
 {"code": "FK", "flag": "🇫🇰", "names": ["Falklandy (Malwiny)", "Falklandy", "Malwiny"], "capitals": ["Port Stanley", "PortStanley"], "continent": "south-america"},
-{"code": "ZW", "flag": "🇿🇼", "names": ["Zimbabwe", "Zimbabwe"], "capitals": ["Harare", "Harare"]}
+{"code": "ZW", "flag": "🇿🇼", "names": ["Zimbabwe", "Zimbabwe"], "capitals": ["Harare", "Harare"], "continent":  "africa"}
 ]

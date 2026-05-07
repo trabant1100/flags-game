@@ -24,7 +24,7 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="cancel_showsModeDialog_and_startsNewGame()">
+      <SelectionState runConfigName="showResults_doesNotCrash_and_showsMap()">
         <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2026-04-26T17:54:12.622732Z">
           <Target type="DEFAULT_BOOT">
@@ -35,18 +35,7 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="restart_hides_results_and_clears_summary()">
-        <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-04-26T17:54:12.622732Z">
-          <Target type="DEFAULT_BOOT">
-            <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/kamilomelanczuk/.android/avd/OnePlus_8_Pro_5G.avd" />
-            </handle>
-          </Target>
-        </DropdownSelection>
-        <DialogSelection />
-      </SelectionState>
-      <SelectionState runConfigName="MainActivityUiTest">
+      <SelectionState runConfigName="map_to_country_europe_is_visible()">
         <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2026-04-26T17:54:12.622732Z">
           <Target type="DEFAULT_BOOT">
