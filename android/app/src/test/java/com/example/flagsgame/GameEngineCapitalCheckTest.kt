@@ -9,7 +9,7 @@ class GameEngineCapitalCheckTest {
     fun checkCapitalAnswer_acceptsNormalizedVariants_and_updatesScore() {
         val engine = GameEngine(total = 1)
         // capitals include a diacritic variant and an ascii fallback
-        val country = Country("PL", "flagPL", listOf("Polska"))
+        val country = Country("PL", "flagPL", listOf("Polska"), "europe")
         country.capitals = listOf("Łódź", "Lodz")
         engine.setCountries(listOf(country))
 

@@ -15,7 +15,7 @@
       </SelectionState>
       <SelectionState runConfigName="Tests in 'com.example.flagsgame'">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-04-26T17:54:12.622732Z">
+        <DropdownSelection timestamp="2026-02-16T22:10:28.464351Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="LocalEmulator" identifier="path=/Users/kamilomelanczuk/.android/avd/OnePlus_8_Pro_5G.avd" />
@@ -24,20 +24,9 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="showResults_doesNotCrash_and_showsMap()">
+      <SelectionState runConfigName="start_map_to_country_for_all_continents()">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-04-26T17:54:12.622732Z">
-          <Target type="DEFAULT_BOOT">
-            <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/kamilomelanczuk/.android/avd/OnePlus_8_Pro_5G.avd" />
-            </handle>
-          </Target>
-        </DropdownSelection>
-        <DialogSelection />
-      </SelectionState>
-      <SelectionState runConfigName="map_to_country_europe_is_visible()">
-        <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-04-26T17:54:12.622732Z">
+        <DropdownSelection timestamp="2026-02-16T22:10:28.464351Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="LocalEmulator" identifier="path=/Users/kamilomelanczuk/.android/avd/OnePlus_8_Pro_5G.avd" />

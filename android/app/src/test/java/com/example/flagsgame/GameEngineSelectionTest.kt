@@ -9,10 +9,10 @@ class GameEngineSelectionTest {
     fun startGame_respectsAvoidAndAskedCounts_and_isDeterministicWithSeed() {
         val engine = GameEngine(total = 3)
         val countries = listOf(
-            Country("A", "flagA", listOf("Aland")),
-            Country("B", "flagB", listOf("Bland")),
-            Country("C", "flagC", listOf("Cland")),
-            Country("D", "flagD", listOf("Dland"))
+            Country("A", "flagA", listOf("Aland"), "europe"),
+            Country("B", "flagB", listOf("Bland"), "europe"),
+            Country("C", "flagC", listOf("Cland"), "europe"),
+            Country("D", "flagD", listOf("Dland"), "europe")
         )
         engine.setCountries(countries)
 

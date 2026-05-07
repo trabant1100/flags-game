@@ -9,9 +9,9 @@ class GameEngineUnitTest {
     fun startGame_avoidsPreviouslyAnswered_whenEnoughCandidates() {
         val engine = GameEngine(2)
         val countries = listOf(
-            Country("A", "🏳️", listOf("Aland")),
-            Country("B", "🏴", listOf("Bland")),
-            Country("C", "🏁", listOf("Cland"))
+            Country("A", "🏳️", listOf("Aland"), "europe"),
+            Country("B", "🏴", listOf("Bland"), "europe"),
+            Country("C", "🏁", listOf("Cland"), "europe")
         )
         engine.setCountries(countries)
 
@@ -27,11 +27,11 @@ class GameEngineUnitTest {
     fun startGame_prefersLessAsked_whenSelectingPool() {
         val engine = GameEngine(3)
         val countries = listOf(
-            Country("A", "🇦", listOf("Aland")),
-            Country("B", "🇧", listOf("Bland")),
-            Country("C", "🇨", listOf("Cland")),
-            Country("D", "🇩", listOf("Dland")),
-            Country("E", "🇪", listOf("Eland"))
+            Country("A", "🇦", listOf("Aland"), "europe"),
+            Country("B", "🇧", listOf("Bland"), "europe"),
+            Country("C", "🇨", listOf("Cland"), "europe"),
+            Country("D", "🇩", listOf("Dland"), "europe"),
+            Country("E", "🇪", listOf("Eland"), "europe")
         )
         engine.setCountries(countries)
 

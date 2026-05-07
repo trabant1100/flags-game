@@ -83,4 +83,39 @@ class MainActivityUiTest {
             onView(withId(R.id.idkBtn)).check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
         }
     }
+
+    @Test
+    fun start_map_to_country_for_all_continents() {
+        val originalLoader = MainActivity.defaultLoader
+        var countryUnderTest = 0
+        var countriesCount = 1
+        try {
+            MainActivity.defaultLoader = object : CountriesLoader() {
+                override fun loadFromAssets(
+                    context: android.content.Context,
+                    assetName: String
+                ): MutableList<Country> {
+                    val countries = originalLoader.loadFromAssets(context, assetName).filter { it.continent != null }
+                    countriesCount = countries.size
+                    val c = countries[countryUnderTest]
+                    return mutableListOf(c)
+                }
+            }
+
+            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                // choose default mode from startup dialog so tests can continue
+                while (countryUnderTest < countriesCount) {
+                    var modeText = ""
+                    scenario.onActivity { modeText = it.getString(R.string.mode_map_to_country) }
+                    onView(withText(modeText)).perform(click())
+                    onView(withText("Wszystkie kontynenty")).perform(click())
+
+                    onView(withId(R.id.cancelBtn)).perform(click())
+                    countryUnderTest++
+                }
+            }
+        } finally {
+            MainActivity.defaultLoader = originalLoader
+        }
+    }
 }

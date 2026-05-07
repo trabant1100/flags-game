@@ -11,7 +11,7 @@ class MapXmlTest {
         val countriesFile = File("src/main/assets/countries.json")
         if (!countriesFile.exists()) fail("countries.json not found at src/main/assets/countries.json")
         val text = countriesFile.readText()
-        val countries = CountriesLoader.loadFromJsonString(text)
+        val countries = CountriesLoader().loadFromJsonString(text)
         val codes = countries.filter { it.continent.equals(continent, ignoreCase = true) }
             .map { CountryOnMap(it) }
             .flatMap { it.getCodes() }

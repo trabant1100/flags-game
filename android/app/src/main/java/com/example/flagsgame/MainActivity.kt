@@ -37,9 +37,12 @@ class MainActivity : AppCompatActivity() {
     private var gameMode: GameMode = GameMode.FLAG_TO_COUNTRY
     private var waitingForMode: Boolean = false
 
+    var countriesLoader = defaultLoader
+
     private var titleTvOrgColor: Int? = null
 
     companion object {
+        var defaultLoader = CountriesLoader()
         private const val KEY_GAME_JSON = "game_state_json"
         private const val KEY_GAME_CURRENT = "game_current"
         private const val KEY_GAME_SCORE = "game_score"
@@ -66,7 +69,7 @@ class MainActivity : AppCompatActivity() {
 
         // Load countries from assets and start or restore the game
         try {
-            val list = CountriesLoader.loadFromAssets(this)
+            val list = countriesLoader.loadFromAssets(this)
             engine.setCountries(list)
             // don't compute avoid/counts yet — we need the selected mode first
             // if we have saved instance state, restore engine from it
@@ -81,7 +84,7 @@ class MainActivity : AppCompatActivity() {
                     gameMode = chosenMode
                     if (gameMode.isMapMode) {
                         showContinentSelection { chosenCont ->
-                            val filtered = if (chosenCont == "Wszystkie") list else list.filter { it.continent == chosenCont }
+                            val filtered = filterCountriesByContinent(list, chosenCont)
                             engine.setCountries(filtered)
                             val avoid2 = SaveGameStorage.getAnsweredCodes(this, gameMode)
                             val counts2 = SaveGameStorage.getAskedCounts(this, gameMode)
@@ -105,7 +108,8 @@ class MainActivity : AppCompatActivity() {
                     val namesArr = o.getJSONArray("names")
                     val names = mutableListOf<String>()
                     for (j in 0 until namesArr.length()) names.add(namesArr.getString(j))
-                    val c = Country(o.getString("code"), o.getString("flag"), names)
+                    val loadedCountry = list.single { it.code == o.getString("code") }
+                    val c = Country(o.getString("code"), o.getString("flag"), names, loadedCountry.continent)
                     c.displayName = o.optString("displayName", if (names.isNotEmpty()) names[0] else "")
                     c.userGuess = if (o.isNull("userGuess")) null else o.getString("userGuess")
                     c.correct = o.optBoolean("correct", false)
@@ -128,7 +132,7 @@ class MainActivity : AppCompatActivity() {
                 .setPositiveButton("OK") { d, _ -> d.dismiss() }
                 .show()
             // set a minimal fallback so app still runs
-            engine.setCountries(listOf(Country("PL", "🇵🇱", listOf("Polska"))))
+            engine.setCountries(listOf(Country("PL", "🇵🇱", listOf("Polska"), "europe")))
             engine.startGame()
         }
 
@@ -171,10 +175,10 @@ class MainActivity : AppCompatActivity() {
             showModeSelection { chosenMode ->
                 gameMode = chosenMode
                 waitingForMode = false
-                val list = CountriesLoader.loadFromAssets(this)
+                val list = countriesLoader.loadFromAssets(this)
                 if (gameMode.isMapMode) {
                     showContinentSelection { chosenCont ->
-                        val filtered = if (chosenCont == "Wszystkie") list else list.filter { it.continent == chosenCont }
+                        val filtered = filterCountriesByContinent(list, chosenCont)
                         engine.setCountries(filtered)
                         val avoid2 = SaveGameStorage.getAnsweredCodes(this, gameMode)
                         val counts2 = SaveGameStorage.getAskedCounts(this, gameMode)
@@ -197,13 +201,13 @@ class MainActivity : AppCompatActivity() {
             // ask user which mode to play on restart (same as app start)
             waitingForMode = true
             showModeSelection { chosenMode ->
-                val list = CountriesLoader.loadFromAssets(this)
+                val list = countriesLoader.loadFromAssets(this)
                 engine.setCountries(list)
                 gameMode = chosenMode
                 waitingForMode = false
                 if (gameMode.isMapMode) {
                     showContinentSelection { chosenCont ->
-                        val filtered = if (chosenCont == "Wszystkie") list else list.filter { it.continent == chosenCont }
+                        val filtered = filterCountriesByContinent(list, chosenCont)
                         engine.setCountries(filtered)
                         engine.startGame(avoid, counts)
                         showQuestionUI()
@@ -435,6 +439,10 @@ class MainActivity : AppCompatActivity() {
             imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT)
         } catch (_: Exception) {
         }
+    }
+
+    private fun filterCountriesByContinent(countries: List<Country>, continent: String): List<Country> {
+        return if (continent == "Wszystkie") countries.filter { it.continent != null } else countries.filter { it.continent == continent }
     }
 
     // animations removed per user request

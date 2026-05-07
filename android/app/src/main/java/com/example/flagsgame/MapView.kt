@@ -98,7 +98,7 @@ class MapView @JvmOverloads constructor(
 
         // Recreate the drawable to ensure a clean state for each question.
         // Doing this once per question is acceptable.
-        val map = VectorMasterDrawable(context, continent.drawable)
+        val map = VectorMasterDrawable(context, continent!!.drawable)
         vectorMasterDrawable = map
         map.setBounds(0, 0, width, height)
 

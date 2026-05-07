@@ -3,8 +3,8 @@ package com.example.flagsgame
 import android.content.Context
 import org.json.JSONArray
 
-object CountriesLoader {
-    fun loadFromAssets(context: Context, assetName: String = "countries.json"): MutableList<Country> {
+open class CountriesLoader {
+    open fun loadFromAssets(context: Context, assetName: String = "countries.json"): MutableList<Country> {
         val json = context.assets.open(assetName).bufferedReader().use { it.readText() }
         return loadFromJsonString(json)
     }
@@ -26,10 +26,9 @@ object CountriesLoader {
                 val caps = o.getJSONArray("capitals")
                 for (j in 0 until caps.length()) capitals.add(caps.getString(j))
             }
-            // optional continent and shapes
-            val continent = if (o.has("continent")) o.optString("continent", "") else ""
-            val country = Country(code, flag, names)
-            country.continent = continent
+            // optional continent
+            val continent = if (o.has("continent")) o.getString("continent") else null
+            val country = Country(code, flag, names, continent)
             country.capitals = capitals
             list.add(country)
         }

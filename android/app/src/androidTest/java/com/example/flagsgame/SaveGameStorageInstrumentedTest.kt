@@ -27,9 +27,9 @@ class SaveGameStorageInstrumentedTest {
 
         val engine = GameEngine(3)
         // prepare deterministic pool
-        val c1 = Country("PL", "🇵🇱", listOf("Polska"))
-        val c2 = Country("DE", "🇩🇪", listOf("Niemcy"))
-        val c3 = Country("FR", "🇫🇷", listOf("Francja"))
+        val c1 = Country("PL", "🇵🇱", listOf("Polska"), "europe")
+        val c2 = Country("DE", "🇩🇪", listOf("Niemcy"), "europe")
+        val c3 = Country("FR", "🇫🇷", listOf("Francja"), "europe")
         engine.setCountries(listOf(c1, c2, c3))
         engine.startGame()
 
@@ -66,8 +66,8 @@ class SaveGameStorageInstrumentedTest {
         if (file.exists()) file.delete()
 
         val engine = GameEngine(2)
-        val c1 = Country("PL", "🇵🇱", listOf("Polska"))
-        val c2 = Country("DE", "🇩🇪", listOf("Niemcy"))
+        val c1 = Country("PL", "🇵🇱", listOf("Polska"), "europe")
+        val c2 = Country("DE", "🇩🇪", listOf("Niemcy"), "europe")
         engine.setCountries(listOf(c1, c2))
         engine.startGame()
 
