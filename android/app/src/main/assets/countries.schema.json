@@ -20,13 +20,15 @@
         "type": "array",
         "items": { "type": "string" },
         "minItems": 1,
-        "description": "List of accepted country names (localized variants)"
+        "description": "List of accepted country names (localized variants)",
+        "uniqueItems": true
       },
       "capitals": {
         "type": "array",
         "items": { "type": "string" },
         "minItems": 1,
-        "description": "Preferred property for one-or-more capital names"
+        "description": "Preferred property for one-or-more capital names",
+        "uniqueItems": true
       },
       "continent": {
         "type": "string",
